@@ -11,6 +11,7 @@ from keras import layers
 BACKBONES = {
     # name: (constructor, preprocessing expected by the ImageNet weights)
     "mobilenetv2": "MobileNetV2",
+    "mobilenetv1": "MobileNet",
     "resnet50": "ResNet50",
 }
 
@@ -55,6 +56,12 @@ def build_transfer_model(
         base = keras.applications.MobileNetV2(
             include_top=False, weights="imagenet", input_shape=(img_size, img_size, 3)
         )
+    elif backbone == "mobilenetv1":
+        # MobileNet (V1) also expects [-1, 1]
+        x = layers.Rescaling(1.0 / 127.5, offset=-1.0, name="mnv1_preprocess")(inputs)
+        base = keras.applications.MobileNet(
+            include_top=False, weights="imagenet", input_shape=(img_size, img_size, 3)
+        )
     elif backbone == "resnet50":
         x = ResNetPreprocess(name="resnet_preprocess")(inputs)
         base = keras.applications.ResNet50(
@@ -73,7 +80,7 @@ def build_transfer_model(
 
 
 # Index of the first layer of the "last block" for each backbone.
-LAST_BLOCK_PREFIX = {"mobilenetv2": "block_16_", "resnet50": "conv5_block3_"}
+LAST_BLOCK_PREFIX = {"mobilenetv2": "block_16_", "mobilenetv1": "conv_dw_13", "resnet50": "conv5_block3_"}
 
 
 def unfreeze_last_layers(base: keras.Model, backbone: str, n_layers: int | None = None) -> list[str]:

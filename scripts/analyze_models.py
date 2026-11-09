@@ -103,7 +103,7 @@ def misclassified_grid(run, path, n=10):
     wrong.to_csv(REPORTS_DIR / "misclassified.csv", index=False)
     cols = 5
     rows = int(np.ceil(len(wrong) / cols))
-    fig, axes = plt.subplots(rows, cols, figsize=(3.2 * cols, 3.6 * rows))
+    fig, axes = plt.subplots(rows, cols, figsize=(3.2 * cols, 4.0 * rows))
     from PIL import Image
     for i, ax in enumerate(np.ravel(axes)):
         ax.axis("off")

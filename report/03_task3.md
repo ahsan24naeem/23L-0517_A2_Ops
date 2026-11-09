@@ -41,7 +41,21 @@ The DagsHub repository `ahsan24naeem/23L-0517_A2_Ops` was created with **Connect
 
 **Tags on every run:** `git_commit` (the exact code version), `git_dirty`, `dvc_data_version` (md5 of `data/raw.dvc`), `splits_md5`, `seed`, Python/TensorFlow/Keras versions, `logging_mode`, `model_family`, `author`.
 
-AUTOLOG_COMPARISON
+Table 3.1 — What each approach captured for the same configuration (`mnv2_finetune` vs `mnv2_finetune_autolog`)
+
+| Aspect | Manual (Keras callback + explicit calls) | `mlflow.tensorflow.autolog()` |
+|---|---|---|
+| Parameters | 18 chosen by me: model type, backbone, **image size, augmentation, unfreeze policy, dropout**, both learning rates, epochs, patience, split sizes | 39 automatic `fit()`/optimizer/callback arguments: `epochs`, `batch_size`, `opt_learning_rate`, `opt_beta_1/2`, `opt_epsilon`, EarlyStopping `monitor/patience/min_delta/restore_best_weights`… — but nothing about the data or preprocessing (I had to add img_size, augment, unfreeze by hand) |
+| Per-epoch metrics | loss/accuracy/AUC/precision/recall for train and val **plus learning rate**, steps 1–30 continuous across both stages | same metrics (and `validation_*` duplicates), but **steps restart at 0 for the second `fit()`** — stage 2 is drawn on top of stage 1 instead of after it |
+| Second training stage | logged correctly (`ft_lr = 1e-5` is a parameter) | **failed silently**: `Changing param values is not allowed … opt_learning_rate old 0.001 new 1e-05` — MLflow parameters are immutable, so the fine-tuning learning rate is missing |
+| Final test metrics, threshold, confusion counts | yes (explicit `log_metrics`) | no — autolog only sees `fit()`; I logged them explicitly in both runs |
+| Model | `mlflow.tensorflow.log_model` | yes, automatically, plus model summary and **TensorBoard event files** |
+| Reproducibility tags (git commit, DVC version, seed) | yes | no — added explicitly in both runs |
+| Custom artifacts (confusion matrix, ROC, splits, pip freeze) | yes | no — added explicitly |
+
+**Conclusion.** Autologging is a quick, zero-effort safety net that records optimizer internals I would never type by hand, and it captures the model and TensorBoard logs. But it only knows about `model.fit()`: it misses everything that defines the *experiment* (data version, preprocessing, augmentation, evaluation, decision threshold) and it mishandles multi-stage training. Manual logging is more work but captures exactly what is needed to compare and reproduce runs, so it is my default; autolog is useful on top of it for single-stage experiments.
+
+**A reproducibility observation.** The two runs use identical code, data, seed and hyper-parameters, yet reached validation AUC 0.881 vs 0.868 (test F1 0.797 vs 0.781). Seeds fix the initial weights, shuffling and augmentation, but multi-threaded CPU kernels sum floating-point numbers in a non-deterministic order, and small differences grow over 30 epochs. `tf.config.experimental.enable_op_determinism()` would remove this at a speed cost. It also shows that differences of ~0.01 AUC between runs are within noise.
 
 > **Screenshot 3.6** — Run page of `mnv2_finetune` (manual): parameters, metric curves (train/val loss, val AUC, learning rate across both stages) and tags (git commit, DVC version, seed).
 

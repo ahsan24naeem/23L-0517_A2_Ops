@@ -25,7 +25,14 @@ case "${1:-all}" in
        --epochs 15 --ft-epochs 15 --logging autolog --description "Reference config with mlflow.tensorflow.autolog"
     ;;&
   extra|all)
-    $T --run-name resnet50_finetune     --model transfer --backbone resnet50 --lr 1e-3 --ft-lr 1e-5 \
-       --epochs 15 --ft-epochs 10 --description "Change: ResNet50 backbone"
+    # ResNet50 is supported too (--backbone resnet50) but its ImageNet weights could not be downloaded
+    # in the training workspace, so the backbone comparison uses MobileNet V1.
+    $T --run-name mnv1_finetune         --model transfer --backbone mobilenetv1 --lr 1e-3 --ft-lr 1e-5 \
+       --epochs 15 --ft-epochs 15 --description "Change: MobileNet V1 backbone"
     ;;
 esac
+# Run added after Keras Tuner (Task 2.7): apply the best tuned settings in the full two-stage schedule
+if [[ "${1:-}" == "tuned" ]]; then
+  $T --run-name mnv2_tuned --model transfer --backbone mobilenetv2 --lr 1e-3 --ft-lr 7.8e-5 --dropout 0.3 \
+     --unfreeze 10 --epochs 15 --ft-epochs 15 --description "Keras Tuner best: fine-tune lr 7.8e-5, dropout 0.3, last 10 layers"
+fi

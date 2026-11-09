@@ -1,0 +1,11 @@
+path,label,p_ai,pred,margin
+data/raw/AiArtData/midjourney-putin.jpg,1,0.08011968,0,0.51988032
+data/raw/AiArtData/240201-airec-main-ksp-5625e8.jpg,1,0.095523745,0,0.5044762549999999
+data/raw/AiArtData/Group_12467.jpg,1,0.18258116,0,0.41741883999999996
+data/raw/AiArtData/ath-flowers-vivid-colors-generative-ai-landscape-painting-mountain-281590810.jpg,1,0.19031487,0,0.40968512999999995
+data/raw/AiArtData/chayka_ai_copyright.jpg,1,0.2063484,0,0.3936516
+data/raw/AiArtData/3e9bc32a-1d77-4f0a-b0df-199c80060385-1024x1024.jpg,1,0.21744984,0,0.38255016
+data/raw/AiArtData/earing-a-yellow-kimono-in-a-beautiful-and-foggy-tropical-greenh-copy-800x800.jpg,1,0.22335915,0,0.37664084999999997
+data/raw/RealArt/_MG_5812.jpg,0,0.9735549,1,0.3735549
+data/raw/AiArtData/ai-generated-7768378_1280.jpg,1,0.24780288,0,0.35219712
+data/raw/AiArtData/nvidia-ai-scribbles-realistic-landscapes.png,1,0.29381043,0,0.30618956999999997

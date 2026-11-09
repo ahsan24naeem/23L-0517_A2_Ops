@@ -44,7 +44,7 @@ def parse_args():
     ap.add_argument("--run-name", required=True)
     ap.add_argument("--experiment", default="VisionGuard")
     ap.add_argument("--model", choices=["cnn", "transfer"], default="transfer")
-    ap.add_argument("--backbone", choices=["mobilenetv2", "resnet50"], default="mobilenetv2")
+    ap.add_argument("--backbone", choices=["mobilenetv2", "mobilenetv1", "resnet50"], default="mobilenetv2")
     ap.add_argument("--img-size", type=int, default=224)
     ap.add_argument("--batch-size", type=int, default=32)
     ap.add_argument("--lr", type=float, default=1e-3, help="learning rate (CNN / frozen-head stage)")
