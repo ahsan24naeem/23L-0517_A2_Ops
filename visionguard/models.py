@@ -97,7 +97,7 @@ def trainable_layer_names(model: keras.Model) -> list[str]:
     names = []
     for layer in model.layers:
         if isinstance(layer, keras.Model):
-            names += [f"{layer.name}/{l.name}" for l in layer.layers if l.trainable and l.weights]
+            names += [f"{layer.name}/{lyr.name}" for lyr in layer.layers if lyr.trainable and lyr.weights]
         elif layer.trainable and layer.weights:
             names.append(layer.name)
     return names

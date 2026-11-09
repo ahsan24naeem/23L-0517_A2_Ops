@@ -19,3 +19,7 @@ tuner/
 *.log
 .DS_Store
 instance/
+mlflow_toy.db
+report/build/_*.md
+report/*.pdf
+report/*.docx

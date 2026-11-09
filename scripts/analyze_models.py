@@ -124,7 +124,7 @@ def misclassified_grid(run, path, n=10):
 
 
 def gradcam_model(model: keras.Model):
-    base = next(l for l in model.layers if isinstance(l, keras.Model))
+    base = next(lyr for lyr in model.layers if isinstance(lyr, keras.Model))
     x = model.input
     for layer in model.layers[1:]:
         if layer is base:
