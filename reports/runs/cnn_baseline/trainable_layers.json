@@ -1,0 +1,13 @@
+{
+  "stage1": [
+    "conv1",
+    "bn1",
+    "conv2",
+    "bn2",
+    "conv3",
+    "bn3",
+    "conv4",
+    "bn4",
+    "p_ai"
+  ]
+}

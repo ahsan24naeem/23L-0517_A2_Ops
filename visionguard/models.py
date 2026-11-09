@@ -84,13 +84,13 @@ def unfreeze_last_layers(base: keras.Model, backbone: str, n_layers: int | None 
     base.trainable = True
     if n_layers is None:
         prefix = LAST_BLOCK_PREFIX[backbone]
-        start = next(i for i, l in enumerate(base.layers) if l.name.startswith(prefix))
+        start = next(i for i, lyr in enumerate(base.layers) if lyr.name.startswith(prefix))
     else:
         start = len(base.layers) - n_layers
     for i, layer in enumerate(base.layers):
         trainable = i >= start and not isinstance(layer, layers.BatchNormalization)
         layer.trainable = trainable
-    return [l.name for l in base.layers if l.trainable and l.weights]
+    return [lyr.name for lyr in base.layers if lyr.trainable and lyr.weights]
 
 
 def trainable_layer_names(model: keras.Model) -> list[str]:

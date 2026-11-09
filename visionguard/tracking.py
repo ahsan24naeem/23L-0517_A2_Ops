@@ -45,7 +45,9 @@ def git_commit() -> str:
 
 
 def git_dirty() -> bool:
-    return bool(_cmd(["git", "status", "--porcelain", "--untracked-files=no"]).strip()) if git_commit() != "unknown" else False
+    if git_commit() == "unknown":
+        return False
+    return bool(_cmd(["git", "status", "--porcelain", "--untracked-files=no"]).strip())
 
 
 def dvc_data_version() -> str:

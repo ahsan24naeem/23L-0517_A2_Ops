@@ -1,0 +1,88 @@
+{
+  "run_id": "12fea560fdbd48859a5d437f124efef3",
+  "run_name": "mnv2_finetune_lr1e-4",
+  "params": {
+    "model_type": "transfer",
+    "backbone": "mobilenetv2",
+    "img_size": 224,
+    "batch_size": 32,
+    "lr": 0.0001,
+    "ft_lr": 1e-05,
+    "max_epochs": 15,
+    "max_ft_epochs": 15,
+    "unfreeze": "last_block",
+    "dropout": 0.3,
+    "augment": true,
+    "seed": 42,
+    "optimizer": "adam",
+    "loss": "binary_crossentropy",
+    "early_stopping_patience": 4,
+    "n_train": 681,
+    "n_val": 146,
+    "n_test": 147
+  },
+  "tags": {
+    "project": "23L-0517_A2_Ops",
+    "git_commit": "791cf9d7f6b238278ddd901590cb2a51d6bd30fb",
+    "git_dirty": "False",
+    "dvc_data_version": "8f23d6dc9b06d363c3981642c50856c0.dir",
+    "splits_md5": "30a6c147d50c",
+    "seed": "42",
+    "python": "3.11.18",
+    "tensorflow": "2.19.0",
+    "keras": "3.15.1",
+    "author": "Ahsan Naeem (23L-0517)",
+    "logging_mode": "manual",
+    "model_family": "mobilenetv2"
+  },
+  "threshold_selection": {
+    "threshold": 0.65,
+    "val_f1": 0.7671232876712328,
+    "val_fpr": 0.13846153846153847,
+    "constraint_met": true
+  },
+  "val": {
+    "accuracy": 0.7671232876712328,
+    "precision": 0.8615384615384616,
+    "recall": 0.691358024691358,
+    "f1": 0.7671232876712328,
+    "roc_auc": 0.8554605887939221,
+    "fpr_real_called_ai": 0.13846153846153847,
+    "fnr_ai_called_real": 0.30864197530864196,
+    "tn": 56,
+    "fp": 9,
+    "fn": 25,
+    "tp": 56
+  },
+  "test": {
+    "accuracy": 0.7482993197278912,
+    "precision": 0.8548387096774194,
+    "recall": 0.654320987654321,
+    "f1": 0.7412587412587412,
+    "roc_auc": 0.8679386457164234,
+    "fpr_real_called_ai": 0.13636363636363635,
+    "fnr_ai_called_real": 0.345679012345679,
+    "tn": 57,
+    "fp": 9,
+    "fn": 28,
+    "tp": 53
+  },
+  "test_at_0.5": {
+    "accuracy": 0.7891156462585034,
+    "precision": 0.8289473684210527,
+    "recall": 0.7777777777777778,
+    "f1": 0.802547770700637,
+    "roc_auc": 0.8679386457164234,
+    "fpr_real_called_ai": 0.19696969696969696,
+    "fnr_ai_called_real": 0.2222222222222222,
+    "tn": 53,
+    "fp": 13,
+    "fn": 18,
+    "tp": 63
+  },
+  "best_epoch": 29,
+  "boundaries": [
+    15
+  ],
+  "train_seconds": 458.8236937522888
+}

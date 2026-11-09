@@ -1,0 +1,12 @@
+{
+  "stage1_frozen_backbone": [
+    "p_ai"
+  ],
+  "stage2_fine_tune": [
+    "mobilenetv2_1.00_160/block_16_expand",
+    "mobilenetv2_1.00_160/block_16_depthwise",
+    "mobilenetv2_1.00_160/block_16_project",
+    "mobilenetv2_1.00_160/Conv_1",
+    "p_ai"
+  ]
+}

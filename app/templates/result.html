@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Result #{{ r.id }}{% endblock %}
+{% block content %}
+{% set pct = (r.confidence * 100)|round(1) %}
+<section class="card result {{ 'ai' if r.is_ai else 'real' }}">
+  <p class="muted small">Request #{{ r.id }} · {{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }} UTC · <code>{{ r.filename }}</code></p>
+  <h1 class="verdict">{{ 'AI-generated' if r.is_ai else 'Real' }}</h1>
+  <p class="conf">Confidence <strong>{{ pct }}%</strong></p>
+  <div class="meter" role="meter" aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+    <span style="width: {{ pct }}%"></span>
+  </div>
+  <dl class="facts">
+    <div><dt>P(AI-generated)</dt><dd>{{ '%.3f'|format(r.p_ai) }}</dd></div>
+    <div><dt>Decision threshold</dt><dd>{{ '%.2f'|format(r.threshold) }}</dd></div>
+    <div><dt>Model</dt><dd><code>{{ r.model_name }}</code> v{{ r.model_version }}</dd></div>
+    <div><dt>Served by</dt><dd>{{ r.inference_mode }} · {{ r.latency_ms }} ms</dd></div>
+    <div><dt>Image</dt><dd>{{ r.image_width }}×{{ r.image_height }} px · {{ (r.file_size_bytes/1024)|round(1) }} KB</dd></div>
+  </dl>
+  <p class="caveat"><strong>Caveat.</strong> {{ caveat }}</p>
+  <div class="actions">
+    <a class="btn" href="{{ url_for('index') }}">Analyse another image</a>
+    <a class="btn ghost" href="{{ url_for('history') }}">View history</a>
+  </div>
+</section>
+{% endblock %}

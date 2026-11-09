@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}History{% endblock %}
+{% block content %}
+<h1>Prediction history</h1>
+<p class="muted">Every request is recorded in the database: what was decided, when, by which model, and how confidently.</p>
+<div class="stats">
+  <div class="stat"><span>{{ stats.total }}</span>requests</div>
+  <div class="stat"><span>{{ stats.ai }}</span>AI-generated</div>
+  <div class="stat"><span>{{ stats.real }}</span>real</div>
+  <div class="stat"><span>{{ (stats.avg_confidence*100)|round(1) }}%</span>avg confidence</div>
+</div>
+{% if rows %}
+<div class="table-wrap card">
+<table>
+  <thead><tr><th>#</th><th>When (UTC)</th><th>File</th><th>Verdict</th><th>Confidence</th><th>P(AI)</th>
+    <th>Model / version</th><th>Mode</th><th>Latency</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+    <tr>
+      <td><a href="{{ url_for('result', pid=r.id) }}">{{ r.id }}</a></td>
+      <td class="nowrap">{{ r.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+      <td class="file" title="{{ r.file_sha256 }}">{{ r.filename }}</td>
+      <td><span class="pill {{ 'ai' if r.is_ai else 'real' }}">{{ r.label }}</span></td>
+      <td>{{ (r.confidence*100)|round(1) }}%</td>
+      <td>{{ '%.3f'|format(r.p_ai) }}</td>
+      <td><code>{{ r.model_name }}</code> v{{ r.model_version }}</td>
+      <td>{{ r.inference_mode }}</td>
+      <td class="nowrap">{{ r.latency_ms }} ms</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+<div class="pager">
+  {% if page > 1 %}<a href="{{ url_for('history', page=page-1) }}">← Newer</a>{% endif %}
+  {% if rows|length == 25 %}<a href="{{ url_for('history', page=page+1) }}">Older →</a>{% endif %}
+</div>
+{% else %}
+<p class="card">No predictions yet. <a href="{{ url_for('index') }}">Upload an image</a>.</p>
+{% endif %}
+{% endblock %}

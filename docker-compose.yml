@@ -1,0 +1,47 @@
+# VisionGuard - full stack in one command:  docker compose up -d --build
+# Two services on a private network: the Flask web app and PostgreSQL.
+name: 23l-0517_a2_ops
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data      # named volume: data survives container re-creation
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks: [backend]
+    # NOTE: no "ports:" -> the database is reachable only from inside the Compose network
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: 23l-0517_a2_ops-web:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      # services reach each other by service name ("db") on the internal network
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      MODEL_PATH: /models/champion.keras
+    volumes:
+      - ./models:/models:ro                   # champion model mounted read-only (not baked in)
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy            # start only when Postgres accepts connections
+    networks: [backend]
+
+volumes:
+  pgdata:
+
+networks:
+  backend:

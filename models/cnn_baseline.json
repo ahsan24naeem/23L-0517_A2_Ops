@@ -1,0 +1,7 @@
+{
+  "model_name": "visionguard-cnn_baseline",
+  "threshold": 0.67,
+  "img_size": 224,
+  "run_id": "51ca30b39ea04f21b71aeba58f0f5e09",
+  "model_version": "local"
+}

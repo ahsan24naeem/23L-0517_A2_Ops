@@ -188,7 +188,9 @@ def main():
         plot_history(history, boundaries, best_epoch, title, out_dir / "training_curves.png")
         plot_confusion(test_m, f"{a.run_name} test (thr={thr['threshold']:.2f})", out_dir / "confusion_matrix.png")
         plot_roc({a.run_name: (test_df.label.values, p_test)}, out_dir / "roc_curve.png")
-        pd.DataFrame(history).assign(epoch=lambda d: np.arange(1, len(d) + 1)).to_csv(out_dir / "history.csv", index=False)
+        hist_df = pd.DataFrame(history)
+        hist_df.insert(0, "epoch", np.arange(1, len(hist_df) + 1))
+        hist_df.to_csv(out_dir / "history.csv", index=False)
         pd.DataFrame({"path": test_df.path, "label": test_df.label, "p_ai": p_test}).to_csv(
             out_dir / "test_predictions.csv", index=False)
         pd.DataFrame({"path": val_df.path, "label": val_df.label, "p_ai": p_val}).to_csv(

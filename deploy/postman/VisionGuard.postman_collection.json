@@ -1,0 +1,212 @@
+{
+  "info": {
+    "name": "VisionGuard API - 23L-0517_A2_Ops",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Model API deployed on Oracle Cloud. Set base_url and api_key in the collection variables. For the predict requests, choose an image file in Body -> form-data -> image."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://<oracle-public-ip>:8000"
+    },
+    {
+      "key": "api_key",
+      "value": "<MODEL_API_KEY>"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/health",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "pm.test('model loaded', () => pm.expect(pm.response.json().status).to.eql('ok'));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Predict - real photo",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));",
+              "const b = pm.response.json(); console.log(b.label, b.confidence, b.model_version);",
+              "pm.test('has label + confidence', () => { pm.expect(b).to.have.property('label'); pm.expect(b.confidence).to.be.within(0.5, 1); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Predict - AI image",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('status 200', () => pm.response.to.have.status(200));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Predict - missing API key (expect 401)",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('rejected without key', () => pm.response.to.have.status(401));"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Predict - wrong file type (expect 415)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{api_key}}"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/predict",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "predict"
+          ]
+        },
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "image",
+              "type": "file",
+              "src": ""
+            }
+          ]
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('wrong type rejected', () => pm.response.to.have.status(415));"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Upload{% endblock %}
+{% block content %}
+<section class="hero">
+  <h1>Is this image AI-generated or real?</h1>
+  <p class="muted">Upload a picture and VisionGuard returns a verdict and how confident it is.
+    The image is analysed in memory and never stored.</p>
+</section>
+
+<form class="card upload" action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data">
+  <label class="drop" for="image">
+    <input id="image" name="image" type="file" accept="image/*" required>
+    <span class="drop-title">Choose an image</span>
+    <span class="muted small">Allowed: {{ allowed }} · max {{ max_mb|round(1) }} MB</span>
+    <img id="preview" alt="" hidden>
+  </label>
+  <button type="submit" class="btn">Analyse image</button>
+</form>
+
+<script>
+  const input = document.getElementById('image');
+  const preview = document.getElementById('preview');
+  input.addEventListener('change', () => {
+    const f = input.files[0];
+    if (!f) { preview.hidden = true; return; }
+    document.querySelector('.drop-title').textContent = f.name;
+    if (f.type.startsWith('image/')) { preview.src = URL.createObjectURL(f); preview.hidden = false; }
+  });
+</script>
+{% endblock %}

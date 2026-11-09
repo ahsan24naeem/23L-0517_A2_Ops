@@ -1,0 +1,21 @@
+# Model API on the Oracle Cloud VM (Task 7).  On the VM:  docker compose -f deploy/oracle/docker-compose.yml up -d --build
+name: 23l-0517_a2_ops-api
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: docker/Dockerfile
+    image: 23l-0517_a2_ops-api:latest
+    restart: unless-stopped
+    env_file: ../../.env                 # MODEL_API_KEY, THRESHOLD, MAX_UPLOAD_MB
+    environment:
+      APP_MODULE: api.wsgi:app
+      MODEL_PATH: /models/champion.keras
+    volumes:
+      - ../../models:/models:ro
+    ports:
+      - "8000:8000"
+    logging:
+      driver: json-file
+      options: {max-size: "10m", max-file: "3"}
