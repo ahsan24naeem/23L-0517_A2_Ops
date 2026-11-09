@@ -1,0 +1,21 @@
+# secrets
+.env
+.env.*
+!.env.example
+# python
+__pycache__/
+*.pyc
+.venv/
+venv/
+.pytest_cache/
+# data and models are versioned by DVC, not Git
+/data/cache
+/models/runs
+# local experiment stores
+mlflow.db
+mlruns/
+mlartifacts/
+tuner/
+*.log
+.DS_Store
+instance/
