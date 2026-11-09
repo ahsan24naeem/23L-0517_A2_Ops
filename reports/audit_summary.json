@@ -1,15 +1,15 @@
 {
-  "total_files": 973,
+  "total_files": 975,
   "per_class": {
     "AI-generated": {
-      "files": 538,
-      "readable": 538,
+      "files": 539,
+      "readable": 539,
       "corrupt": 0,
       "duplicates": 1
     },
     "Real": {
-      "files": 435,
-      "readable": 435,
+      "files": 436,
+      "readable": 436,
       "corrupt": 0,
       "duplicates": 0
     }
@@ -22,9 +22,9 @@
         "file_size_kb": 11.5
       },
       "median": {
-        "width": 1028.5,
+        "width": 1024.0,
         "height": 800.0,
-        "file_size_kb": 195.14999999999998
+        "file_size_kb": 195.1
       },
       "max": {
         "width": 6000.0,
@@ -39,9 +39,9 @@
         "file_size_kb": 11.0
       },
       "median": {
-        "width": 940.0,
+        "width": 920.0,
         "height": 720.0,
-        "file_size_kb": 141.6
+        "file_size_kb": 141.45
       },
       "max": {
         "width": 8495.0,
@@ -51,19 +51,19 @@
     }
   },
   "formats": {
-    "AI-generated/JPEG": 428,
+    "AI-generated/JPEG": 429,
     "AI-generated/PNG": 110,
-    "Real/JPEG": 402,
+    "Real/JPEG": 403,
     "Real/PNG": 33
   },
   "modes": {
     "AI-generated/L": 1,
     "AI-generated/P": 14,
-    "AI-generated/RGB": 488,
+    "AI-generated/RGB": 489,
     "AI-generated/RGBA": 35,
     "Real/L": 6,
     "Real/P": 9,
-    "Real/RGB": 406,
+    "Real/RGB": 407,
     "Real/RGBA": 14
   },
   "corrupt_files": [],

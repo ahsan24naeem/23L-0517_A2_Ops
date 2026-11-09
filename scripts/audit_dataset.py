@@ -48,7 +48,7 @@ def main() -> None:
     rows = []
     for folder, label in CLASS_FOLDERS.items():
         for p in sorted((DATA_DIR / folder).rglob("*")):
-            if not p.is_file() or p.name.startswith("."):
+            if not p.is_file() or p.name == ".DS_Store" or p.name.startswith("._"):
                 continue
             row = {
                 "class": CLASS_NAMES[label],

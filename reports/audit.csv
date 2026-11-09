@@ -1,6 +1,7 @@
 class,label,path,extension,file_size_kb,sha256,width,height,mode,format,readable,error,dup_group_size,is_duplicate,cross_class_dup
 Real,0,data/raw/RealArt/-Skills-Promo-A-Total-Artist-All-of-North-Wests-Impressive-Drawings-Photos-5.jpg,.jpg,432.0,22caa477409798cba709a4aa3c8e11a0e3b76fddc22e9ee105e5fc8f053c2dfe,1529,2000,RGB,JPEG,True,,1,False,False
 Real,0,data/raw/RealArt/-man-sits-with-a-woman-on-her-phone-at-a-table-while-looking-at-a-computer_l.jpg,.jpg,93.7,1a5956c457a8e1874c1154531b82fa95319f3da19639db538ba088b906defb56,2121,1414,RGB,JPEG,True,,1,False,False
+Real,0,data/raw/RealArt/.amazonaws.com2Fpublic2Fimages2Fcb32a00a-bf52-48fe-9ba6-4e21cf4c1c57_800x800.png,.png,92.0,2c0dccf553cdb57f9a998836b943046644df0e430c8c7a434ab4a3940b6c3103,800,800,RGB,JPEG,True,,1,False,False
 Real,0,data/raw/RealArt/0182.png,.png,747.0,136230cce42e457c3f4db89abeb7e8da53fcac6ed489f19fceb8142294b4aeee,1920,1080,P,PNG,True,,1,False,False
 Real,0,data/raw/RealArt/02-still-for-america-room-loop-superJumbo.jpg,.jpg,550.4,3e882440df690ecb66470c3c625b63c9dd73b3ecc9990c8502ae20adfc3b6c08,2048,1365,RGB,JPEG,True,,1,False,False
 Real,0,data/raw/RealArt/05-12-21-happy-people.jpg,.jpg,95.0,972ca4e22b60d25b0528fbc46e5af6a9e97fa6a8360d4216bea0f0152e4e9f32,1400,880,RGB,JPEG,True,,1,False,False
@@ -438,6 +439,7 @@ AI-generated,1,data/raw/AiArtData/-how-important-people-from-the-past-really-loo
 AI-generated,1,data/raw/AiArtData/-s-fluffy-fur-and-round-features-immediately-melted-the-viewer-s-heart-photo.jpg,.jpg,321.7,e31692a1b6ac7ff0754ea8717ad51e1cbed6267982baceecea9a21c14534d7ae,2940,1960,RGB,JPEG,True,,1,False,False
 AI-generated,1,data/raw/AiArtData/-using-generative-ai-technology-landscape-pattern-abstract-concept-269270897.jpg,.jpg,260.8,e90cbc6e6199b9f622295d61ef0913f2f64f0544c2f650b1aa5a2be14d46266f,1067,1690,RGB,JPEG,True,,1,False,False
 AI-generated,1,data/raw/AiArtData/-yellow-kimono-with-a-golden-crown-and-a-very-detailed-Barn-owl-copy-800x800.jpg,.jpg,87.6,ea4b6260faac11d4914e56c123d87b97c692ab2c3802faa386d0a3bccdbfb7eb,800,800,RGB,JPEG,True,,1,False,False
+AI-generated,1,data/raw/AiArtData/.amazonaws.com2Fpublic2Fimages2Ff89de3bb-279b-42c9-9822-a653fb5b21e6_600x480.png,.png,51.4,3009ba845a440f74016286b0603c244c681a93e1f4a14f40bf75821431916d95,600,480,RGB,JPEG,True,,1,False,False
 AI-generated,1,data/raw/AiArtData/0002_AI-in-animal-classification.png,.png,195.1,1c80e482a4eaab40f98b520d1a1b02aabb4ea07d48e194851f5655cbab09de37,1200,600,P,PNG,True,,1,False,False
 AI-generated,1,data/raw/AiArtData/00urban_biodiversity_landscape_architecture_14ed209d-45ca-4c57-b995-4d1552813cc1.jpg,.jpg,571.6,2b95e6dc2460162646f39e4c1b37fbee657d06a1aa02555fd7b47d743ff98804,1664,1120,RGB,JPEG,True,,1,False,False
 AI-generated,1,data/raw/AiArtData/03a3gbCKfH8dDJnjhHLuHDf-1.fit_lim.v1665523315.png,.png,675.3,8cb2ad79d90eae2a14b134fe24e014a36a583f5b552116d11afb4623bb85fff2,1021,574,RGB,PNG,True,,1,False,False

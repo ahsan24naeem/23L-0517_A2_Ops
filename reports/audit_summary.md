@@ -1,37 +1,37 @@
 # Dataset audit summary
 
-Total files: 973
+Total files: 975
 
 | Class | Files | Readable | Corrupt | Duplicate copies |
 |---|---|---|---|---|
-| AI-generated | 538 | 538 | 0 | 1 |
-| Real | 435 | 435 | 0 | 0 |
+| AI-generated | 539 | 539 | 0 | 1 |
+| Real | 436 | 436 | 0 | 0 |
 
 | Class | Stat | Width (px) | Height (px) | File size (KB) |
 |---|---|---|---|---|
 | AI-generated | min | 225 | 135 | 11.5 |
-| AI-generated | median | 1028 | 800 | 195.1 |
+| AI-generated | median | 1024 | 800 | 195.1 |
 | AI-generated | max | 6000 | 4001 | 5494.3 |
 | Real | min | 183 | 158 | 11.0 |
-| Real | median | 940 | 720 | 141.6 |
+| Real | median | 920 | 720 | 141.4 |
 | Real | max | 8495 | 7091 | 9956.4 |
 
 | Class | Format | Count |
 |---|---|---|
-| AI-generated | JPEG | 428 |
+| AI-generated | JPEG | 429 |
 | AI-generated | PNG | 110 |
-| Real | JPEG | 402 |
+| Real | JPEG | 403 |
 | Real | PNG | 33 |
 
 | Class | Colour mode | Count |
 |---|---|---|
 | AI-generated | L | 1 |
 | AI-generated | P | 14 |
-| AI-generated | RGB | 488 |
+| AI-generated | RGB | 489 |
 | AI-generated | RGBA | 35 |
 | Real | L | 6 |
 | Real | P | 9 |
-| Real | RGB | 406 |
+| Real | RGB | 407 |
 | Real | RGBA | 14 |
 
 Corrupt / unreadable files: 0
