@@ -94,6 +94,7 @@ Table 2.3 — Best epoch (lowest validation loss, marked green in the curves)
 | Baseline CNN | 17 of 30 | **11** | early stopping (patience 6) |
 | MobileNetV2 fine-tuned (chosen) | 15 + 15 | **27** (epoch 12 of fine-tuning) | reached the epoch limit; checkpoint keeps epoch 27 |
 | MobileNetV2 head only | 15 | 15 | still improving — more epochs would help a little |
+| **MobileNetV2 tuned (champion, 2.7)** | 15 + 15 | **27** (epoch 12 of fine-tuning) | val loss 0.406; checkpoint keeps epoch 27 |
 
 `ReduceLROnPlateau` cut the CNN's learning rate from 1e-3 to 9e-5 by epoch 10, which is visible as the flattening of its curves.
 
@@ -103,45 +104,46 @@ Table 2.3 — Best epoch (lowest validation loss, marked green in the curves)
 
 **Threshold choice — on validation data.** For each threshold from 0.05 to 0.95 I compute F1 and the false-positive rate (real called AI) on the *validation* set and pick the threshold with the **highest F1 subject to FPR ≤ 15 %**. The cap encodes the product decision above; F1 then balances precision and recall within it. Choosing the threshold on the test set would leak test information into the model and overstate performance.
 
-![Figure 2.4 — Threshold selection on validation data for the chosen model.](../reports/figures/threshold_selection.png){width=80%}
+![Figure 2.4 — Threshold selection on validation data for the champion (`mnv2_tuned`).](../reports/figures/threshold_selection.png){width=80%}
 
-Table 2.4 — Test-set metrics (147 images, evaluated once, threshold chosen on validation)
+Table 2.4 — Test-set metrics (147 images, each model evaluated once, threshold chosen on validation)
 
 | Model | Threshold | Accuracy | Precision | Recall | F1 | ROC-AUC | FPR real→AI | FNR AI→real |
-|---|---|---|---|---|---|---|---|---|
+|------------|---|---|---|---|---|---|---|---|
 | Baseline CNN | 0.67 | 0.592 | 0.769 | 0.370 | 0.500 | 0.735 | 0.136 | 0.630 |
-| **MobileNetV2 fine-tuned** | **0.60** | **0.796** | **0.881** | **0.728** | **0.797** | **0.868** | **0.121** | **0.272** |
+| MobileNetV2, last block fine-tuned (2.3) | 0.60 | 0.796 | 0.881 | 0.728 | 0.797 | 0.868 | 0.121 | 0.272 |
+| **MobileNetV2 tuned — champion** | **0.71** | **0.769** | **0.885** | **0.667** | **0.761** | **0.871** | **0.106** | **0.333** |
 
-Confusion counts (TN / FP / FN / TP): CNN 57 / 9 / 51 / 30; MobileNetV2 58 / 8 / 22 / 59.
+Confusion counts (TN / FP / FN / TP): CNN 57 / 9 / 51 / 30; MobileNetV2 (2.3) 58 / 8 / 22 / 59; champion 59 / 7 / 27 / 54. The champion is the run with the best **validation** ROC-AUC (0.898) — see 3.5 for the selection.
 
 ![Figure 2.5 — Test-set ROC curves of both models.](../reports/figures/roc_both_models.png){width=62%}
 
 ![Figure 2.6 — Test-set confusion matrices at the validation-chosen thresholds.](../reports/figures/confusion_both_models.png){width=85%}
 
-*Interpretation.* Transfer learning wins clearly on every metric: ROC-AUC 0.868 vs 0.735 and F1 0.797 vs 0.500. With only 681 training images, a network trained from scratch cannot learn good visual features; MobileNetV2 brings features learned from 1.2 M ImageNet images and only has to learn how to combine them.
+*Interpretation.* Transfer learning wins clearly on every metric: ROC-AUC 0.87 vs 0.735 and F1 0.76–0.80 vs 0.50. With only 681 training images, a network trained from scratch cannot learn good visual features; MobileNetV2 brings features learned from 1.2 M ImageNet images and only has to learn how to combine them.
 
-The chosen threshold for MobileNetV2 is **0.60**, not 0.5: on validation, 0.5 would call about 25 % of real images AI-generated (Figure 2.4); 0.60 is the F1-best threshold that keeps that rate under the 15 % cap. On the test set it produced a **12.1 % false-positive rate** (8 of 66 real images flagged) while catching 73 % of AI images, with 88 % precision — when VisionGuard says "AI-generated" it is right 88 % of the time. For the CNN the same rule forces a high threshold (0.67) and the model then misses 63 % of AI images: a weak ranker cannot satisfy the constraint without giving up recall. The remaining false positives are why the result page carries a caveat.
+The champion's threshold is **0.71**, not 0.5: on validation (Figure 2.4), 0.5 would flag far more real images as AI; 0.71 is the F1-best threshold whose false-positive rate (7.7 % on validation) stays under the 15 % cap. On the test set it flagged **7 of 66 real images (FPR 10.6 %)** — the lowest of the three — while catching two thirds of AI images, with 88.5 % precision: when VisionGuard says "AI-generated" it is right almost 9 times in 10. This is the trade-off I chose deliberately: fewer false accusations at the cost of missing more fakes. The 2.3 model has a higher test F1 (0.797) at threshold 0.60, but it was *not* selected because model choice must not look at the test set; on 147 test images a difference of 0.03 F1 is about four images and within noise (its validation AUC was 0.881 vs 0.898). For the CNN the same rule forces a high threshold (0.67) and it then misses 63 % of AI images: a weak ranker cannot meet the constraint without giving up recall. The remaining false positives are why the result page carries a caveat.
 
 ## 2.6 Error analysis
 
-![Figure 2.7 — The 10 most confident mistakes of the chosen model on the test set (title: true class, P(AI), original size and format).](../reports/figures/misclassified_grid.png){width=100%}
+![Figure 2.7 — The 10 most confident mistakes of the champion (`mnv2_tuned`) on the test set (title: true class, P(AI), original size and format).](../reports/figures/misclassified_grid.png){width=100%}
 
-Table 2.5 — Hypotheses for the 10 most confident mistakes (9 AI images called real, 1 real image called AI)
+Table 2.5 — Hypotheses for the 10 most confident mistakes of the champion (all 10 are AI images called real; its 7 false positives are less confident)
 
-| # | True | P(AI) | What the image is | Hypothesis |
-|---|---|---|---|---|
-| 1 | AI | 0.08 | Vintage-print collage of a politician in a bathtub of flowers | Paper texture, film grain and muted print colours imitate a scanned photo; no glossy "AI look" |
-| 2 | AI | 0.10 | Flat pop-art poster of lips | Graphic design with flat colour areas — similar to the posters/illustrations in the *Real* folder; no photographic texture to judge |
-| 3 | AI | 0.18 | App-icon-like sailboat logo on black | Not a generated scene but a logo/screenshot (label noise); almost no texture |
-| 4 | AI | 0.19 | Painted mountain landscape with a stock-site watermark | Watermark and illustration style resemble the stock images in the *Real* class |
-| 5 | AI | 0.21 | 3D wireframe hand holding a framed picture | Clean CGI render on a plain background — the model has learned "busy, saturated detail ⇒ AI", which this lacks |
-| 6 | AI | 0.22 | Photorealistic portrait of an elderly man | Highly photorealistic generator output; artefacts (skin, hair) disappear when 1024 px is downsampled to 224 px |
-| 7 | AI | 0.22 | Photorealistic portrait of a young woman with shallow depth of field | Same as 6; the generator's colour-bar signature in the corner becomes a few pixels after resizing |
-| 8 | Real | 0.97 | Photo of a painter's palette and brushes | Chaotic, highly saturated paint texture looks like "AI art" — the style shortcut works against a real photo |
-| 9 | AI | 0.23 | Studio portrait of an elderly man with round glasses | Photorealistic portrait lighting, like 6 |
-| 10 | AI | 0.29 | Split image: segmentation sketch beside a photo-like landscape | Half the image is a flat colour map (looks like a diagram); the other half is photorealistic |
+| # | P(AI) | What the image is | Hypothesis |
+|-|--|--------|------------|
+| 1 | 0.03 | Vintage-print collage of a politician in a bathtub of flowers | Paper texture, grain and muted print colours imitate a scanned photo — no glossy "AI look" |
+| 2 | 0.03 | Flat pop-art poster of lips | Graphic design with flat colour areas, like the posters/illustrations in the *Real* folder; no photographic texture to judge |
+| 3 | 0.13 | Painted mountain landscape with a stock-site **watermark** | Watermark and illustration style resemble the stock images in the *Real* class |
+| 4 | 0.15 | Photorealistic portrait of an elderly man | Highly photorealistic generator output; skin/hair artefacts disappear when 1024 px is **downsampled** to 224 px |
+| 5 | 0.16 | App-icon-like sailboat logo on black | Not a generated scene but a logo/screenshot — effectively **label noise**; almost no texture |
+| 6 | 0.17 | 3D wireframe hand holding a framed picture | Clean CGI render on a plain dark background; the model learned "busy, saturated detail ⇒ AI", which this lacks |
+| 7 | 0.18 | Portrait of a young woman, shallow depth of field | Photorealistic like #4; the generator's coloured signature in the corner shrinks to a few pixels |
+| 8 | 0.25 | Studio portrait of an elderly man with round glasses | Photorealistic portrait lighting, like #4 |
+| 9 | 0.26 | Hybrid animal (boar with quills) in a dusty field | Plausible natural photo style with **blurred background**; the impossible anatomy is a semantic cue the model does not use |
+| 10 | 0.32 | Flat vector illustration of mountains with map pins | **Vector/flat illustration** (PNG) — no texture at all; resembles clip-art in the *Real* folder |
 
-**Pattern.** The mistakes are dominated by *photorealistic* AI portraits (6, 7, 9) and by *non-photographic* AI images — posters, logos, CGI (2, 3, 5). The model has largely learned a **style** cue (saturated, over-detailed fantasy art ⇒ AI) rather than generator artefacts, which is consistent with the dataset: most AI images are fantasy art, while the *Real* folder mixes photos with paintings and graphics. Resizing to 224 px also removes fine high-frequency evidence. Image size and format are not the explanation here — nine of ten are ordinary JPEGs of typical size.
+**Pattern.** The mistakes are dominated by *photorealistic* AI images (4, 7, 8, 9) and by *non-photographic* AI images — posters, logos, CGI and vector art (2, 5, 6, 10). The model has largely learned a **style/texture** cue (saturated, over-detailed fantasy art ⇒ AI) rather than generator artefacts or semantic errors, which mirrors the dataset: most AI images are fantasy art, while the *Real* folder mixes photos with paintings and graphics. Downsampling to 224 px also removes fine high-frequency evidence. Size and format do not explain these errors — nine of ten are ordinary JPEGs of typical size. The same images were also the top mistakes of the 2.3 model, so this is a systematic data problem, not a quirk of one training run.
 
 ## 2.7 Tool lab: Keras Tuner
 
@@ -164,14 +166,33 @@ Table 2.6 — Keras Tuner Hyperband on Fashion-MNIST (10 trials; trials 0–4 tr
 
 Reading the best settings with `tuner.get_best_hyperparameters()[0]` gives **256 units and learning rate ≈ 1.7e-3**; the best model reaches **86.9 % test accuracy**. More units and a learning rate around 1e-3 help; very small learning rates (≈1e-4) are clearly worse within 6 epochs because the network has not converged.
 
-**Apply.** `scripts/tune.py` runs **RandomSearch with TUNER_TRIALS trials** on MobileNetV2 (224 px), searching learning rate ∈ [1e-5, 1e-3] (log), dropout ∈ {0.1 … 0.5} and **number of unfrozen backbone layers ∈ {0, 10, 20, 40}**. Each trial trains for up to 5 epochs with early stopping and is scored on validation AUC; the table is logged to MLflow (experiment `VisionGuard-tuning`).
+**Apply.** `scripts/tune.py` runs **RandomSearch with 10 trials** on MobileNetV2 (224 px), searching learning rate ∈ [1e-5, 1e-3] (log), dropout ∈ {0.1 … 0.5} and **number of unfrozen backbone layers ∈ {0, 10, 20, 40}**. Each trial trains for up to 5 epochs with early stopping and is scored on validation AUC; the table is logged to MLflow (experiment `VisionGuard-tuning`).
 
-TUNER_RESULTS
+Table 2.7 — VisionGuard random search, 10 trials, sorted by validation AUC
+
+| Trial | Learning rate | Dropout | Unfrozen layers | Val. AUC |
+|---|---|---|---|---|
+| 07 | 7.8e-5 | 0.3 | 10 | **0.894** |
+| 09 | 2.3e-4 | 0.5 | 10 | 0.893 |
+| 02 | 1.2e-4 | 0.1 | 10 | 0.893 |
+| 00 | 1.9e-4 | 0.1 | 10 | 0.892 |
+| 03 | 3.1e-5 | 0.5 | 20 | 0.878 |
+| 01 | 3.5e-5 | 0.5 | 10 | 0.869 |
+| 06 | 4.1e-5 | 0.3 | 40 | 0.861 |
+| 08 | 1.4e-5 | 0.1 | 20 | 0.840 |
+| 04 | 6.7e-4 | 0.1 | 40 | 0.582 |
+| 05 | 1.2e-5 | 0.3 | 0 | 0.446 |
+
+![Figure 2.9 — Validation AUC against each searched hyper-parameter (Spearman correlation in the axis label).](../reports/tuner/visionguard_tuner.png){width=100%}
+
+**Which setting mattered most: the learning rate.** It has the strongest rank correlation with validation AUC (ρ = +0.43, vs −0.27 for unfrozen layers and +0.22 for dropout), and both failures are learning-rate failures: 6.7e-4 with 40 unfrozen layers (AUC 0.58) is so large that it wrecks the pretrained features of many layers at once, and 1.2e-5 with a frozen backbone (0.45) is so small that the new head barely moves in 5 epochs. Between those extremes the number of unfrozen layers interacts with it — all four best trials unfreeze **10 layers** with a learning rate of 0.8–2.3 × 10⁻⁴ — while dropout makes almost no difference (0.1, 0.3 and 0.5 all appear among the top four). The top four differ by only 0.0015 AUC — about one image's worth of ranking on 146 validation images — so they are effectively tied.
+
+**Applying the result.** I trained one more full two-stage run, `mnv2_tuned`, with the tuner's best fine-tuning settings (stage-2 learning rate 7.8e-5, dropout 0.3, last 10 backbone layers — `block_16_depthwise`, `block_16_project`, `Conv_1`). It reached **validation AUC 0.898**, the best of all runs, and became the champion (Chapter 3.5). Its test AUC (0.871) is close to the reference run's (0.868), and its validation score is higher than its test score — a small, live example of the warning below.
 
 **Why choosing the best validation score can overfit the validation set.** Each trial's validation score is a noisy estimate (146 images: one image is 0.7 % accuracy). Trying many configurations and keeping the maximum selects partly for *luck on these particular 146 images* — the winner's score is optimistically biased, and the more trials, the stronger the bias ("winner's curse"). The validation set has effectively been used for fitting the hyper-parameters. That is why the final numbers are reported on the untouched test set, and why small differences between trials (±0.01 AUC) should not be over-interpreted; with more data, nested or k-fold cross-validation would give a more reliable choice.
 
 ## Bonus — Grad-CAM
 
-![Figure 2.8 — Grad-CAM heat maps for 4 correct (left) and 4 wrong (right) predictions of the chosen model.](../reports/figures/gradcam.png){width=100%}
+![Figure 2.8 — Grad-CAM heat maps for 4 correct (left) and 4 wrong (right) predictions of the champion (`mnv2_tuned`).](../reports/figures/gradcam.png){width=100%}
 
-*What the model looks at.* For correct AI predictions the heat concentrates on texture-rich regions — the fur and feathers of the fantasy creature (P(AI)=0.88) and the colourful panels of the AI collage (1.00): the over-detailed, glossy texture typical of generators. For correct real predictions the evidence is weak and diffuse (P(AI)=0.06 and 0.41), i.e. "real" is mostly the *absence* of such texture. The wrong predictions show the shortcut: the real photo of an artist in front of a vivid dotted artwork is called AI because the model attends to the saturated pattern (0.67), and the AI pop-art poster is called real because the activation sits on a small edge region rather than the content (0.10). The model mostly judges *style and texture*, not semantic giveaways such as malformed hands or text. Grad-CAM at MobileNetV2's last layer is only 7×7, so the maps are coarse.
+*What the model looks at.* For correct AI predictions the heat concentrates on texture-rich regions — the fur and feather pattern around the fantasy creature's face (P(AI)=0.96) and the painted-portrait grid (0.98): the over-detailed, smooth-but-intricate texture typical of generators. For correct real predictions the evidence is weak and diffuse (P(AI)=0.02 for the deer); in the masked-woman photo (0.32) the model looks at the mask — a manipulated-looking object — but not enough to cross the threshold. The wrong predictions show the shortcut: a real tiger photo is called AI (0.82) because the attention sits on the vivid, high-contrast stripe texture, and a real black-and-white triptych is called AI (0.79) with attention on the patterned headdress; the AI pop-art poster is called real (0.03) with the activation on a small edge region rather than the content. The model judges *style and texture*, not semantic giveaways such as impossible anatomy. Grad-CAM at MobileNetV2's last layer is only 7×7, so the maps are coarse.

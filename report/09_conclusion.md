@@ -1,6 +1,8 @@
 # Conclusion and lessons
 
-CONCLUSION_SUMMARY
+VisionGuard works end to end: a de-duplicated, DVC-versioned dataset; a reproducible `tf.data` pipeline whose preprocessing is shared with serving; ten tracked experiments; a registered champion (`visionguard@champion`, MobileNetV2 fine-tuned with Keras-Tuner settings) with **test ROC-AUC 0.871, precision 0.885 and a 10.6 % false-positive rate** at a threshold chosen on validation data; a Flask app with validation, history and health checks; a two-service Compose stack with a private PostgreSQL; CI; and the model API on Oracle Cloud called from the local app.
+
+The most important lessons were not about architecture. The **data** limits the model: the "Real" class contains paintings, graphics and at least one generated image, AI images are mostly fantasy art, and the error analysis and Grad-CAM show the model learned *style and texture* rather than generator artefacts — it misses photorealistic fakes and flat graphics. With 146 validation and 147 test images, differences of ±0.02 AUC between runs are noise (the identical manual and autolog runs differed by 0.013), so I selected on validation only and report test numbers once. On the engineering side, pinning versions, keeping preprocessing in one function, loading the model once, and reading every setting from the environment prevented most of the problems that otherwise appear between "works on my machine" and a deployed service.
 
 **What I would improve with more time.**
 

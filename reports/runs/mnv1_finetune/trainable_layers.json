@@ -1,0 +1,10 @@
+{
+  "stage1_frozen_backbone": [
+    "p_ai"
+  ],
+  "stage2_fine_tune": [
+    "mobilenet_1.00_224/conv_dw_13",
+    "mobilenet_1.00_224/conv_pw_13",
+    "p_ai"
+  ]
+}

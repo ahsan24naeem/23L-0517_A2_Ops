@@ -1,0 +1,9 @@
+{
+  "model_name": "visionguard",
+  "model_version": 2,
+  "alias": "champion",
+  "run_id": "b26390f455d242bc8a141b25973dc7ae",
+  "run_name": "mnv2_tuned",
+  "threshold": 0.71,
+  "img_size": 224
+}

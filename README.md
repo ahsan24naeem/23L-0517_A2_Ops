@@ -45,7 +45,7 @@ Reproduce the pipeline:
 
 ```bash
 python scripts/audit_dataset.py && python scripts/make_splits.py && python scripts/eda.py
-bash scripts/run_experiments.sh all           # 9 MLflow runs
+bash scripts/run_experiments.sh all && bash scripts/run_experiments.sh tuned   # 10 MLflow runs
 python scripts/tune.py --trials 10            # Keras Tuner
 python scripts/compare_runs.py
 python scripts/register_model.py              # versions + @champion alias, exports models/champion.keras

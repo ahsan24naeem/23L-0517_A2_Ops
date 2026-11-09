@@ -38,11 +38,11 @@ The key is compared in constant time (`hmac.compare_digest`) and comes from the 
 
 | # | Request | Expected | Logged result |
 |---|---|---|---|
-| 1 | `GET /health` | 200, `status: ok` | POSTMAN_1 |
-| 2 | `POST /predict` real photo + key | 200, label + confidence | POSTMAN_2 |
-| 3 | `POST /predict` AI image + key | 200 | POSTMAN_3 |
-| 4 | `POST /predict` without key | 401 | POSTMAN_4 |
-| 5 | `POST /predict` a `.txt` file | 415 | POSTMAN_5 |
+| 1 | `GET /health` | 200, `status: ok` | **[fill in]** |
+| 2 | `POST /predict` real photo + key | 200, label + confidence | **[fill in]** |
+| 3 | `POST /predict` AI image + key | 200 | **[fill in]** |
+| 4 | `POST /predict` without key | 401 | **[fill in]** |
+| 5 | `POST /predict` a `.txt` file | 415 | **[fill in]** |
 
 > **Screenshot 7.7** — Postman: `/predict` with the API key, response JSON and passing tests.  **Screenshot 7.8** — Postman: 401 without the key.  **Screenshot 7.9** — Postman Runner / Console with all five results.  **Screenshot 7.10** — `docker compose logs api` on the VM showing one log line per request.
 
@@ -61,7 +61,16 @@ python -m app            # Flask on http://127.0.0.1:5000, debug off
 
 switches the running app to the cloud model without any code change. At start-up the app calls the API's `/health` to learn the model name, version and threshold. For every upload the Flask view validates the file locally (rejecting bad files before they cost a network round trip), sends the bytes to `POST /predict`, stores the API's answer in the local database with `inference_mode = remote` and the measured round-trip latency, and redirects to the result page. If the API is down or the key is wrong, the user sees a friendly "Model service error" page (502) instead of a crash, and nothing is written to the history.
 
-INTEGRATION_TABLE
+Table 8.1 — Inputs sent through the local Flask app to the cloud model (fill in from the result pages)
+
+| # | Image (file) | True class | Verdict | Confidence | P(AI) | Model version | Round-trip latency |
+|---|---|---|---|---|---|---|---|
+| 1 | | Real | | | | | |
+| 2 | | Real | | | | | |
+| 3 | | Real | | | | | |
+| 4 | | AI | | | | | |
+| 5 | | AI | | | | | |
+| 6 | | AI | | | | | |
 
 > **Screenshots 8.1–8.6** — Six uploads through `localhost:5000` (three real, three AI) with the result pages showing *Served by: remote*.
 > **Screenshot 8.7** — History page listing those requests with model version and mode `remote`.

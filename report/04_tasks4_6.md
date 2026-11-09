@@ -9,8 +9,10 @@
 **Why training and serving preprocessing must match.** The model only learned the mapping from pixels prepared one particular way (Pillow decode → RGB → bilinear squash to 224×224 → raw 0–255, with MobileNetV2's `[-1, 1]` scaling inside the model). If serving used, say, TensorFlow's decoder with a different resize filter, cropping instead of squashing, BGR order or 0–1 scaling, the input distribution would shift and accuracy would silently drop — the classic *training/serving skew*. Putting the preprocessing in one shared function, and the model-specific scaling inside the saved model, removes that risk by construction.
 
 ```text
-$ python -c "from visionguard.inference import Predictor; p=Predictor('models/champion.keras'); ..."
-INFERENCE_CONSOLE_OUTPUT
+$ python -c "from visionguard.inference import Predictor; p = Predictor('models/champion.keras'); ..."
+loaded visionguard v2 (threshold 0.71, input 224px) in 6.0s
+RealArt   1032249.jpg                            -> Real         conf=0.975 p_ai=0.025 119.1 ms
+AiArtData 1EOlo-3uyfHVlEE649tq62g.png            -> AI-generated conf=0.996 p_ai=0.996 125.1 ms
 ```
 
 > **Screenshot 4.1** — Console output of the inference module for one known real image and one known AI image.
@@ -53,8 +55,26 @@ Every setting is read from environment variables in `app/config.py`: `MODEL_PATH
 
 `python -m app` starts the built-in Flask server with `debug=False` and the reloader off; inside Docker the app runs under **Gunicorn** (`gunicorn app.wsgi:app`, 1 worker × 4 threads). Debug mode stays off because: the Werkzeug debugger gives anyone who can trigger an error an interactive Python console (remote code execution); detailed tracebacks leak paths, settings and code; and the auto-reloader starts the process twice, loading the model twice. The built-in server is single-process and not hardened, which is why a production WSGI server is used in the container.
 
+Example `/health` response (Gunicorn + PostgreSQL 16, champion model):
+
 ```json
-HEALTH_JSON
+{
+    "database": {
+        "backend": "postgresql",
+        "ok": true
+    },
+    "debug": false,
+    "inference_mode": "local",
+    "model": {
+        "api_url": null,
+        "loaded": true,
+        "name": "visionguard",
+        "path": "models/champion.keras",
+        "threshold": 0.71,
+        "version": "2"
+    },
+    "status": "ok"
+}
 ```
 
 > **Screenshot 4.9** — Browser at `http://localhost:8000/health` showing `"status": "ok"`, `"debug": false`, model version and `"database": {"backend": "postgresql", "ok": true}`.
@@ -114,11 +134,6 @@ docker compose exec db psql -U visionguard -d visionguard \
 
 `.dockerignore` excludes `.git`, `.env*`, `data/`, `models/`, `mlflow.db`, reports, tests and labs. This keeps the build context small and — importantly — **keeps secrets out of the image**: `.env` can never be copied in, and secrets are only injected at run time through `env_file`.
 
-```text
-$ docker compose exec web whoami && docker compose exec web id
-WHOAMI_OUTPUT
-```
-
 > **Screenshot 6.7** — `docker compose exec web sh -c 'whoami; id'` showing `vg`, uid 10001.
 
 ## 6.3 Compose stack
@@ -132,19 +147,24 @@ All passwords come from an untracked `.env` (template: `.env.example`).
 
 **How the model reaches the container: mounted, not built in.** `./models` is bind-mounted read-only at `/models`. Reasons: the image stays independent of any particular model (one image, many model versions); promoting a new champion means replacing one file and restarting — no rebuild or re-push of a 1.5 GB image; the model file is versioned by DVC/MLflow, not by Docker layers; and the read-only mount means the app cannot alter it. `models/champion.keras` arrives on a machine via `dvc pull` (or `python scripts/register_model.py`, which exports the `@champion` version from the registry once). The serving app never calls DagsHub per request. The trade-off — the container is not self-contained — is acceptable because Compose declares the mount explicitly.
 
-```text
-$ docker compose ps
-COMPOSE_PS
-$ nc -vz localhost 5432
-NC_OUTPUT
-```
-
 > **Screenshot 6.8** — `docker compose up -d --build` followed by `docker compose ps` with both services `(healthy)`.
 > **Screenshot 6.9** — Proof the DB port is closed: `docker compose port db 5432` prints nothing / `nc -vz localhost 5432` fails, while `docker compose exec web python -c "import socket; socket.create_connection(('db',5432)); print('db reachable from web')"` succeeds.
 
 ## 6.4 Image analysis
 
-IMAGE_ANALYSIS
+**Optimised image** (`docker/Dockerfile`): `python:3.11-slim`, `tensorflow-cpu`, `PIP_NO_CACHE_DIR=1`, `__pycache__`/test folders deleted in the same layer, `.dockerignore`, dependencies before code.
+**Naive image** (`docker/Dockerfile.naive`): full `python:3.11` base, the generic `tensorflow` wheel, pip cache kept, no `.dockerignore`, `COPY . .` first.
+
+Table 6.1 — Image sizes (`docker image ls`)
+
+| Image | Size |
+|---|---|
+| `vg-naive` (before) | NAIVE_SIZE |
+| `23l-0517_a2_ops-web` (after) | OPT_SIZE |
+
+**Largest layers** (`docker history`): by far the biggest is the `RUN pip install … tensorflow…` layer (TensorFlow, Keras and their dependencies — well over 1 GB uncompressed), followed by the Debian base layers; our own source code layers are only kilobytes, which confirms that ordering dependencies before code is what makes rebuilds fast. In the naive image the base layer alone is ~1 GB (compilers and dev headers we never use), the build context includes data, models and `.git` because there is no `.dockerignore`, and the pip cache stays in the layer.
+
+**Conclusion.** The size is dominated by TensorFlow itself, so the slim base, the CPU-only wheel and not keeping caches give the largest savings; the next step would be serving with TFLite / LiteRT instead of full TensorFlow.
 
 > **Screenshot 6.10** — `docker image ls` showing both images and `docker history 23l-0517_a2_ops-web` showing the largest layers.
 
@@ -154,10 +174,14 @@ IMAGE_ANALYSIS
 
 **Deliberate failure — wrong database password.** `scripts/ops_demo.sh break-password` changes `POSTGRES_PASSWORD` in `.env` and recreates only the web container. The database keeps its original password, because Postgres reads `POSTGRES_PASSWORD` only the first time the volume is initialised.
 
-*Diagnosis from logs only.* `docker compose ps` shows `web` restarting. `docker compose logs web` shows:
+*Diagnosis from logs only.* `docker compose ps` shows `web` restarting, and `docker compose logs web` (Screenshot 6.12) ends with the lines below. The excerpt here is from my rehearsal of the same failure — the same Gunicorn command against a local PostgreSQL 16 on port 5433 — before running it in Compose, where the host reads `db` and the port `5432`:
 
 ```text
-OPS_FAILURE_LOG
+[2026-11-10 01:32:57 +0500] [9183] [INFO] Booting worker with pid: 9183
+[2026-11-10 01:33:20 +0500] [9183] [ERROR] Exception in worker process
+psycopg2.OperationalError: connection to server at "127.0.0.1", port 5433 failed: FATAL:  password authentication failed for user "visionguard"
+[2026-11-10 01:33:20 +0500] [9182] [ERROR] Shutting down: Master
+[2026-11-10 01:33:20 +0500] [9182] [ERROR] Reason: Worker failed to boot.
 ```
 
 The key line is `FATAL: password authentication failed for user "visionguard"`: the network and the DB container are fine (the connection reached Postgres), but the credentials are rejected — so the problem is configuration, not code. *Fix:* restore the original password in `.env` (`ops_demo.sh fix-password`) and recreate `web`; `docker compose ps` shows both services healthy again. (If the password really had to change, the correct fix is `ALTER USER … PASSWORD …` inside Postgres, or recreating the volume.) A second scenario, `break-model`, renames `champion.keras`: the logs show `MODEL LOAD FAILED: FileNotFoundError` and `/health` returns 503 with the error, and the container turns `unhealthy`.

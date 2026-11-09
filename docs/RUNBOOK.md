@@ -1,7 +1,7 @@
 # VisionGuard — runbook for the steps on your Mac (23L-0517)
 
 Everything that could be done without your accounts is already done: code, data audit, EDA,
-splits, 9 training runs + Keras Tuner (stored in the local MLflow store `mlflow.db` + `mlruns/`),
+splits, 10 training runs + Keras Tuner (stored in the local MLflow store `mlflow.db` + `mlruns/`),
 figures, the registered champion model (`models/champion.keras`), tests, Dockerfiles, Compose,
 CI, Oracle deploy files and the report draft (`report/23L-0517_VisionGuard.docx`).
 
@@ -84,7 +84,7 @@ mlflow ui --backend-store-uri sqlite:///mlflow_toy.db --port 5001
 #   tick both → Compare → Screenshot 3.4 (parallel coordinates / metric chart). Ctrl+C to stop.
 # 3.2 same toy run against DagsHub
 python labs/mlflow_toy.py --remote                     # Screenshot 3.5 (toy runs on DagsHub)
-# 3.3-3.5 copy the 9 VisionGuard runs + tuner run to DagsHub (no retraining)
+# 3.3-3.5 copy the 10 VisionGuard runs + tuner run to DagsHub (no retraining)
 python scripts/sync_to_dagshub.py --experiments VisionGuard VisionGuard-tuning
 #   DagsHub → Experiments → open mnv2_finetune (manual) and mnv2_finetune_autolog:
 #   Screenshots 3.6/3.7 (params, metric charts, tags), 3.8 (Artifacts tab), 3.9 (compare all runs)

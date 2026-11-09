@@ -6,7 +6,14 @@
 
 `labs/mlflow_toy.py` trains a tiny dense network (Flatten → Dense(64) → Dense(10)) on Fashion-MNIST for 5 epochs, twice — learning rate **0.001** and **0.01** — and for each run logs the parameters, the per-epoch `loss / accuracy / val_loss / val_accuracy` (Keras callback), an accuracy plot (artifact), tags and the model (`mlflow.tensorflow.log_model`). `mlflow ui --backend-store-uri sqlite:///mlflow_toy.db` opens the local interface, where *Compare* puts both runs side by side.
 
-TOY_MLFLOW
+Table 3.2 — Toy runs (Fashion-MNIST, 20k training / 5k validation images, 5 epochs)
+
+| Run | learning_rate | val_accuracy per epoch | final val_accuracy | final val_loss |
+|---|---|---|---|---|
+| `toy_lr_0.001` | 0.001 | 0.807 → 0.828 → 0.838 → 0.848 → 0.854 | **0.854** | **0.416** |
+| `toy_lr_0.01` | 0.01 | 0.826 → 0.836 → 0.843 → 0.842 → 0.849 | 0.849 | 0.430 |
+
+The comparison view shows the trade-off immediately: lr 0.01 learns faster in the first epochs but plateaus and wobbles (epoch 4 dips), while lr 0.001 improves smoothly and ends slightly better — the larger steps overshoot near the minimum.
 
 Definitions in my own words:
 
@@ -44,7 +51,7 @@ The DagsHub repository `ahsan24naeem/23L-0517_A2_Ops` was created with **Connect
 Table 3.1 — What each approach captured for the same configuration (`mnv2_finetune` vs `mnv2_finetune_autolog`)
 
 | Aspect | Manual (Keras callback + explicit calls) | `mlflow.tensorflow.autolog()` |
-|---|---|---|
+|--|-----|-----|
 | Parameters | 18 chosen by me: model type, backbone, **image size, augmentation, unfreeze policy, dropout**, both learning rates, epochs, patience, split sizes | 39 automatic `fit()`/optimizer/callback arguments: `epochs`, `batch_size`, `opt_learning_rate`, `opt_beta_1/2`, `opt_epsilon`, EarlyStopping `monitor/patience/min_delta/restore_best_weights`… — but nothing about the data or preprocessing (I had to add img_size, augment, unfreeze by hand) |
 | Per-epoch metrics | loss/accuracy/AUC/precision/recall for train and val **plus learning rate**, steps 1–30 continuous across both stages | same metrics (and `validation_*` duplicates), but **steps restart at 0 for the second `fit()`** — stage 2 is drawn on top of stage 1 instead of after it |
 | Second training stage | logged correctly (`ft_lr = 1e-5` is a parameter) | **failed silently**: `Changing param values is not allowed … opt_learning_rate old 0.001 new 1e-05` — MLflow parameters are immutable, so the fine-tuning learning rate is missing |
@@ -79,19 +86,52 @@ Each run differs from the reference run `mnv2_finetune` (MobileNetV2, 224 px, he
 | `mnv2_finetune_lr1e-4` | head learning rate 1e-4 instead of 1e-3 |
 | `mnv2_finetune_img160` | image size 160 instead of 224 |
 | `mnv2_finetune_unfreeze40` | last 40 backbone layers unfrozen instead of the last block |
-| `resnet50_finetune` | ResNet50 backbone instead of MobileNetV2 |
+| `mnv1_finetune` | MobileNet V1 backbone instead of MobileNetV2 |
+| `mnv2_tuned` | Keras Tuner's best fine-tuning settings (stage-2 lr 7.8e-5, dropout 0.3, last 10 layers) |
 | `mnv2_finetune_autolog` | same config, MLflow autologging (checks logging, not the model) |
 
-RUN_COMPARISON
+Table 3.3 — All runs, sorted by validation ROC-AUC (`scripts/compare_runs.py` → `reports/run_comparison.csv`)
+
+| Run | Change | Best ep. | **Val AUC** | Val F1 | Thr. | Test acc. | Test prec. | Test rec. | Test F1 | Test AUC | Test FPR | Min. |
+|--------|------|--|---|---|--|---|---|---|---|---|---|--|
+| **mnv2_tuned** | tuner settings (2.7) | 27 | **0.898** | 0.814 | 0.71 | 0.769 | 0.885 | 0.667 | 0.761 | 0.871 | **0.106** | 8.6 |
+| mnv2_finetune | reference | 27 | 0.881 | 0.816 | 0.60 | 0.796 | 0.881 | 0.728 | 0.797 | 0.868 | 0.121 | 8.5 |
+| mnv2_finetune_unfreeze40 | 40 layers unfrozen | 25 | 0.881 | 0.786 | 0.76 | 0.789 | 0.931 | 0.667 | 0.777 | 0.876 | 0.061 | 8.5 |
+| mnv1_finetune | MobileNet V1 backbone | 29 | 0.871 | 0.776 | 0.69 | 0.816 | 0.886 | 0.765 | 0.821 | 0.908 | 0.121 | 7.9 |
+| mnv2_finetune_noaug | no augmentation | 29 | 0.870 | 0.746 | 0.73 | 0.782 | 0.902 | 0.679 | 0.775 | 0.886 | 0.091 | 7.7 |
+| mnv2_finetune_autolog | autologging | 30 | 0.868 | 0.784 | 0.59 | 0.782 | 0.877 | 0.704 | 0.781 | 0.864 | 0.121 | 8.9 |
+| mnv2_finetune_lr1e-4 | head lr 1e-4 | 29 | 0.855 | 0.767 | 0.65 | 0.748 | 0.855 | 0.654 | 0.741 | 0.868 | 0.136 | 7.6 |
+| mnv2_head_only | no fine-tuning | 15 | 0.844 | 0.759 | 0.68 | 0.762 | 0.883 | 0.654 | 0.752 | 0.860 | 0.106 | 4.2 |
+| mnv2_finetune_img160 | 160 px input | 28 | 0.806 | 0.631 | 0.77 | 0.728 | 0.847 | 0.617 | 0.714 | 0.852 | 0.136 | 5.0 |
+| cnn_baseline | CNN from scratch | 11 | 0.679 | 0.475 | 0.67 | 0.592 | 0.769 | 0.370 | 0.500 | 0.735 | 0.136 | 10.1 |
+
+![Figure 3.1 — Validation ROC-AUC (used for selection) and test F1 (reported) for every run.](../reports/figures/run_comparison.png){width=90%}
+
+**What each change taught me.**
+
+- **Pretrained vs scratch** is by far the biggest effect (+0.20 validation AUC).
+- **Fine-tuning the last block** beats a frozen backbone (0.881 vs 0.844): the top features adapt from "ImageNet objects" towards "generated vs real texture".
+- **Image size 160** is clearly worse (0.806): downsampling destroys fine detail, which is exactly the evidence of generation.
+- **Head learning rate 1e-4** is too slow for 15 epochs (0.855).
+- **Augmentation** helps validation AUC (0.881 vs 0.870) even though the no-augmentation run happens to score higher on test — another reminder that 146/147-image splits are noisy.
+- **Unfreezing 40 layers** ties the reference on AUC and gives the fewest false positives on test (6.1 %), but its curves show stronger overfitting (train accuracy ≫ validation).
+- **MobileNet V1** is competitive (0.871 val) and has the best *test* numbers. I did not pick it, because choosing by test results would make the test set part of model selection. ResNet50 was planned for this slot, but its ImageNet weights could not be downloaded in the training workspace (hash mismatch with the only reachable mirror), so the code supports it but the comparison uses MobileNet V1.
+
+**Choice: `mnv2_tuned`.** My selection metric is **validation ROC-AUC**, because it measures ranking quality independently of any threshold (the threshold is chosen afterwards for the product). The champion's secondary metric is the one that matters most for the product, the **false-positive rate on real images**: at its validation-chosen threshold it flags only 7.7 % of real validation images and 10.6 % of real test images, the lowest among the top-AUC MobileNetV2 runs, while keeping 88.5 % precision. Its test AUC (0.871) confirms that the choice generalises. The top runs are within ~0.02 AUC of each other, which on 146 validation images is close to noise, so the selection is "one of several equally good MobileNetV2 configurations" rather than a decisively better model.
 
 > **Screenshot 3.9** — DagsHub/MLflow comparison of all runs (table + chart of val AUC / test F1).
 
 ## 3.6 Model registry
 
-`scripts/register_model.py` ranks finished runs by **validation ROC-AUC** (tie-break validation F1), creates the registered model **`visionguard`**, registers two versions from the runs' `model/` artifacts — **v1 = `cnn_baseline`** (alias `challenger`) and **v2 = the best run** (alias **`champion`**) — and tags each version with its decision threshold and validation/test AUC. It then exports the champion's Keras file to `models/champion.keras` plus `champion.json` (threshold, version, run id). `scripts/predict_by_alias.py` is a separate script that loads `models:/visionguard@champion`, reads the threshold from the version's tags and classifies one image:
+`scripts/register_model.py` ranks finished runs by **validation ROC-AUC** (tie-break validation F1), creates the registered model **`visionguard`**, registers two versions from the runs' `model/` artifacts — **v1 = `cnn_baseline`** (alias `challenger`) and **v2 = the best run, `mnv2_tuned`** (alias **`champion`**) — and tags each version with its decision threshold and validation/test AUC. It then exports the champion's Keras file to `models/champion.keras` plus `champion.json` (threshold, version, run id). `scripts/predict_by_alias.py` is a separate script that loads `models:/visionguard@champion`, reads the threshold from the version's tags and classifies one image:
 
 ```text
-PREDICT_BY_ALIAS
+$ python scripts/predict_by_alias.py data/raw/RealArt/1032249.jpg
+tracking URI : sqlite:////home/claude/23L-0517_A2_Ops/mlflow.db
+model        : models:/visionguard@champion -> version 2 (run b26390f4, mnv2_tuned)
+loaded in    : 1.3s
+image        : data/raw/RealArt/1032249.jpg
+P(AI)=0.0247  threshold=0.71  ->  Real  (confidence 97.5%)
 ```
 
 Using an alias means the serving side asks for "the champion", not "version 2": promoting a better model later is just moving the alias, with no code change.
