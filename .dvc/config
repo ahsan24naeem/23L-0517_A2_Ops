@@ -1,2 +1,5 @@
 [core]
     autostage = true
+    remote = origin
+['remote "origin"']
+    url = https://dagshub.com/ahsan24naeem/23L-0517_A2_Ops.dvc

@@ -1,0 +1,5 @@
+outs:
+- md5: b4b58497d9163a28ba03743947d6eb43
+  size: 15450294
+  hash: md5
+  path: champion.keras
