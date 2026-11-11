@@ -9,7 +9,7 @@ What is left needs **your accounts or your machine**, and the report needs **you
 (terminal prompt with your username + date visible). Screenshot IDs below match the grey boxes in
 the report. Take them with `Cmd+Shift+4` and paste each one under its box in the .docx.
 
-Replace `ahsan24naeem`, `ahsan24naeem`, `ORACLE_IP` with your real values everywhere.
+Replace `ahsan24naeem`, `ahsan24naeem`, `141.148.203.241` with your real values everywhere.
 
 ---
 
@@ -147,11 +147,11 @@ and green runs. Screenshot 6.16 = the README badge on the main repo.
    (Screenshot 7.3).
 4. From your Mac:
    ```bash
-   ssh ubuntu@ORACLE_IP
+   ssh ubuntu@141.148.203.241
    git clone https://github.com/ahsan24naeem/23L-0517_A2_Ops.git && cd 23L-0517_A2_Ops
    bash deploy/oracle/setup_vm.sh && exit          # Screenshot 7.4, then log in again
    ```
-5. Copy the model (from the Mac, project folder): `scp models/champion.keras models/champion.json ubuntu@ORACLE_IP:~/23L-0517_A2_Ops/models/`
+5. Copy the model (from the Mac, project folder): `scp models/champion.keras models/champion.json ubuntu@141.148.203.241:~/23L-0517_A2_Ops/models/`
 6. On the VM:
    ```bash
    cd ~/23L-0517_A2_Ops
@@ -160,16 +160,16 @@ and green runs. Screenshot 6.16 = the README badge on the main repo.
    docker compose -f deploy/oracle/docker-compose.yml ps                # Screenshot 7.5
    docker compose -f deploy/oracle/docker-compose.yml logs --tail 20
    ```
-7. From your Mac **on a different network (phone hotspot)**: `curl http://ORACLE_IP:8000/health` (Screenshot 7.6).
+7. From your Mac **on a different network (phone hotspot)**: `curl http://141.148.203.241:8000/health` (Screenshot 7.6).
 8. Postman → Import `deploy/postman/VisionGuard.postman_collection.json` → collection Variables:
-   `base_url = http://ORACLE_IP:8000`, `api_key = <key>` → for requests 2, 3, 5 choose a file in
+   `base_url = http://141.148.203.241:8000`, `api_key = <key>` → for requests 2, 3, 5 choose a file in
    Body → form-data → image (5 = any .txt). Send each, then *Run collection* (Screenshots 7.7-7.9).
    On the VM `docker compose -f deploy/oracle/docker-compose.yml logs --tail 20` (Screenshot 7.10).
 
 ## 9. Flask → cloud API (Task 8, ≈10 min)
 
 ```bash
-INFERENCE_MODE=remote MODEL_API_URL=http://ORACLE_IP:8000 python -m app     # key comes from .env
+INFERENCE_MODE=remote MODEL_API_URL=http://141.148.203.241:8000 python -m app     # key comes from .env
 ```
 Upload at least 6 images (3 real, 3 AI) at http://127.0.0.1:5000 → Screenshots 8.1-8.6 (result
 pages show "Served by remote"), 8.7 History, 8.8 `/health`.

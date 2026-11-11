@@ -13,22 +13,22 @@ The key is compared in constant time (`hmac.compare_digest`) and comes from the 
 ## Research before deploying
 
 - **Current free limits (checked in November 2026).** Oracle's documentation now lists Ampere A1 Always Free as **2 OCPUs and 12 GB RAM** in total (1,500 OCPU-hours and 9,000 GB-hours per month) — halved from 4 OCPU / 24 GB in June 2026. Also free: up to two **E2.1.Micro** x86 VMs (1/8 OCPU, 1 GB RAM, 50 Mbps), **200 GB** block storage (boot volumes included) and **10 TB/month** outbound traffic. My console's *Limits, Quotas and Usage* page confirmed the numbers for my tenancy (Screenshot 7.1).
-- **Arm vs x86.** A1 is Arm64 (Ampere Altra); E2.1.Micro is x86-64. TensorFlow import alone needs ~600 MB RAM, so the 1 GB micro VM would need swap and be slow; I used **one A1 instance with 1 OCPU / 6 GB** and an **Ubuntu 22.04 aarch64** image. The Dockerfile handles both architectures (`TARGETARCH`: `tensorflow-cpu` on amd64, `tensorflow` on arm64), and the image is built on the VM itself so it is native arm64.
+- **Arm vs x86.** A1 is Arm64 (Ampere Altra); E2.1.Micro is x86-64. Free A1 capacity was not available in my region (India West, Mumbai), so I used an **x86 VM.Standard.E2.1.Micro** (1 GB RAM) with **Ubuntu 22.04**. TensorFlow import alone needs ~600 MB, so `setup_vm.sh` adds a **2 GB swap file**, and the API runs a single Gunicorn worker. The Dockerfile handles both architectures (`TARGETARCH`: `tensorflow-cpu` on amd64, `tensorflow` on arm64), and the image is built on the VM itself.
 - **Free-instance availability.** A1 capacity is often exhausted ("Out of host capacity"); the fix is to try another availability domain or retry later.
 - **Idle-instance reclamation.** Oracle may reclaim an Always Free instance if, over 7 days, its 95th-percentile CPU, network and (for A1) memory utilisation are all below 20 %. A demo API is mostly idle, so I keep the instance only for the grading period (a cron job generating synthetic load would be against the spirit of the rule).
 - **The two firewalls.** Traffic must pass (1) the **VCN Security List** (or a Network Security Group) in the OCI console — an ingress rule for TCP 8000 from 0.0.0.0/0 — *and* (2) the **VM's own iptables**, because Oracle's Ubuntu images ship rules that reject everything except SSH. Opening only one of them is the most common reason the API "does not respond".
 
 ## Step-by-step deployment
 
-1. **Create the VM.** OCI Console → Compute → Instances → *Create instance*: name `23L-0517_A2_Ops`, image *Canonical Ubuntu 22.04 (aarch64)*, shape *VM.Standard.A1.Flex* 1 OCPU / 6 GB, assign a public IPv4, upload my SSH public key. *(Screenshot 7.2)*
+1. **Create the VM.** First *Networking → Virtual cloud networks → Start VCN Wizard → Create VCN with Internet Connectivity* (`23L-0517_A2_Ops-vcn`, which creates the public subnet, internet gateway and route table). Then *Compute → Instances → Create instance*: image *Canonical Ubuntu 22.04*, shape *VM.Standard.E2.1.Micro* (Always Free), existing VCN + **public** subnet, *assign public IPv4* on, my SSH public key. *(Screenshot 7.2)*
 2. **Open port 8000 in the VCN.** Instance → Subnet → Default Security List → *Add Ingress Rule*: source `0.0.0.0/0`, TCP, destination port `8000`. *(Screenshot 7.3)*
-3. **SSH in and prepare the VM.** `ssh ubuntu@ORACLE_IP`, then `bash deploy/oracle/setup_vm.sh` (from the repo) installs Docker Engine + Compose, adds the user to the `docker` group, opens TCP 8000 in iptables (`iptables -I INPUT 6 … --dport 8000 -j ACCEPT` + `netfilter-persistent save`) and adds a 2 GB swap file. *(Screenshot 7.4)*
-4. **Get the code and the model.** `git clone https://github.com/ahsan24naeem/23L-0517_A2_Ops.git && cd 23L-0517_A2_Ops`; from my laptop `scp models/champion.keras models/champion.json ubuntu@ORACLE_IP:~/23L-0517_A2_Ops/models/` (alternatively `dvc pull models/champion.keras` with DagsHub credentials). The model is copied once at deploy time — the API never contacts DagsHub while serving.
+3. **SSH in and prepare the VM.** `ssh ubuntu@141.148.203.241`, then `bash deploy/oracle/setup_vm.sh` (from the repo) installs Docker Engine + Compose, adds the user to the `docker` group, opens TCP 8000 in iptables (`iptables -I INPUT 6 … --dport 8000 -j ACCEPT` + `netfilter-persistent save`) and adds a 2 GB swap file. *(Screenshot 7.4)*
+4. **Get the code and the model.** From my laptop: `rsync -av --exclude data --exclude mlruns --exclude .git … ./ ubuntu@141.148.203.241:~/23L-0517_A2_Ops/` — this copies the code and `models/champion.keras` (the registry's `@champion` version, exported once). The API never contacts DagsHub while serving.
 5. **Secrets.** `cp .env.example .env` and set `MODEL_API_KEY` to a long random value (`python3 -c "import secrets;print(secrets.token_urlsafe(32))"`). `.env` stays on the VM only.
 6. **Build and start.** `docker compose -f deploy/oracle/docker-compose.yml up -d --build`, then `docker compose -f deploy/oracle/docker-compose.yml ps` (healthy) and `logs` (`model loaded: visionguard v2`). *(Screenshot 7.5)*
-7. **Test from the VM and from outside.** `curl http://localhost:8000/health` on the VM; `curl http://ORACLE_IP:8000/health` from my laptop **on a different network (mobile hotspot)**. *(Screenshot 7.6)*
+7. **Test from the VM and from outside.** `curl http://localhost:8000/health` on the VM; `curl http://141.148.203.241:8000/health` from my laptop **on a different network (mobile hotspot)**. *(Screenshot 7.6)*
 
-**API URL:** `http://ORACLE_IP:8000` — health check `http://ORACLE_IP:8000/health`, prediction `POST http://ORACLE_IP:8000/predict`.
+**API URL:** `http://141.148.203.241:8000` — health check `http://141.148.203.241:8000/health`, prediction `POST http://141.148.203.241:8000/predict`.
 
 **Mapping of Compose elements to the provider.** Compose service → Docker on the VM; published port → VCN security-list rule + iptables rule; `.env` → file on the VM (could be OCI Vault); bind-mounted model → file on the VM's boot volume; restart policy `unless-stopped` → containers return after a VM reboot.
 
@@ -54,7 +54,7 @@ The web app has two interchangeable back-ends behind one interface (`app/predict
 
 ```bash
 INFERENCE_MODE=remote
-MODEL_API_URL=http://ORACLE_IP:8000
+MODEL_API_URL=http://141.148.203.241:8000
 MODEL_API_KEY=<same key as on the VM>
 python -m app            # Flask on http://127.0.0.1:5000, debug off
 ```

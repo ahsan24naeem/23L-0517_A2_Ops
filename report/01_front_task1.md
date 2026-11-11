@@ -11,7 +11,7 @@ subtitle: "MLOps — Assignment 2 · Project 23L-0517_A2_Ops"
 | **GitHub** | https://github.com/ahsan24naeem/23L-0517_A2_Ops |
 | **DagsHub** | https://dagshub.com/ahsan24naeem/23L-0517_A2_Ops |
 | **MLflow (DagsHub)** | https://dagshub.com/ahsan24naeem/23L-0517_A2_Ops.mlflow |
-| **Model API (Oracle Cloud)** | http://ORACLE_IP:8000  (health: http://ORACLE_IP:8000/health) |
+| **Model API (Oracle Cloud)** | http://141.148.203.241:8000  (health: http://141.148.203.241:8000/health) |
 | **Graded commit** | COMMIT_HASH |
 
 **Disclosure of AI assistance.** I used Claude (Anthropic) as an AI assistant throughout this assignment: it wrote most of the code (data audit, tf.data pipeline, models, MLflow instrumentation, Flask app, model API, Dockerfiles, Compose, CI), ran the training experiments in a cloud workspace, and drafted this report. I supplied the dataset, ran every step that needed my accounts or my machine (GitHub, DagsHub, Docker Desktop, Oracle Cloud, Postman), took all screenshots, checked the results and edited the text. No other tutorials were followed beyond the official documentation of TensorFlow/Keras, MLflow, DVC, DagsHub, Docker and Oracle Cloud.

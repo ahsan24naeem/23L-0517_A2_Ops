@@ -13,7 +13,7 @@ Compose, and its inference API is deployed on Oracle Cloud.
 |---|---|
 | GitHub | https://github.com/ahsan24naeem/23L-0517_A2_Ops |
 | DagsHub (code, data, models, MLflow) | https://dagshub.com/ahsan24naeem/23L-0517_A2_Ops |
-| Model API (Oracle Cloud) | http://ORACLE_IP:8000 |
+| Model API (Oracle Cloud) | http://141.148.203.241:8000 |
 
 ## Repository layout
 
