@@ -9,6 +9,7 @@ TOY=${TOY_DIR:-$HOME/23L-0517_A2_Ops-dvc-toy}
 step() { printf '\n\033[1;34m==> %s\033[0m\n' "$*"; }
 run()  { printf '\033[0;90m$ %s\033[0m\n' "$*"; eval "$@"; }
 
+if [[ -z "${RESUME:-}" ]]; then
 step "0. fresh, empty folder: $TOY   ($(whoami) @ $(date '+%Y-%m-%d %H:%M'))"
 rm -rf "$TOY" && mkdir -p "$TOY" && cd "$TOY"
 
@@ -43,8 +44,13 @@ step "   ...and return to the latest version"
 run git checkout -q HEAD -- weather.csv.dvc
 run dvc checkout
 run wc -l weather.csv
+run git log --oneline
+[[ -n "${STOP_AFTER_CHECKOUT:-}" ]] && exit 0
+else
+  cd "$TOY"
+fi
 
-step "5. configure remote storage"
+step "5. configure remote storage   ($(whoami) @ $(date '+%Y-%m-%d %H:%M'))"
 if [[ -n "${DAGSHUB_USER:-}" && -n "${DAGSHUB_TOKEN:-}" ]]; then
   REPO=${DAGSHUB_REPO:-23L-0517_A2_Ops-dvc-toy}
   run dvc remote add -d origin "https://dagshub.com/$DAGSHUB_USER/$REPO.dvc"

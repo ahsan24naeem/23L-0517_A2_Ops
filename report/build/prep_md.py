@@ -39,6 +39,9 @@ for line in Path(src).read_text().splitlines():
             for i, desc in found:
                 out.append(f"![Screenshot {i} — {desc}](shots/{i}.png){{width=100%}}")
                 out.append("")
+                if (SHOTS / f"{i}b.png").exists():
+                    out.append(f"![Screenshot {i} (continued)](shots/{i}b.png){{width=100%}}")
+                    out.append("")
             if missing:
                 out.append("> " + "  ".join(f"**Screenshot {i}** — {d}" for i, d in missing))
                 out.append("")
