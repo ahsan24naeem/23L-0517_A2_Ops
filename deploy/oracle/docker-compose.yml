@@ -13,7 +13,7 @@ services:
       APP_MODULE: api.wsgi:app
       MODEL_PATH: /models/champion.keras
     volumes:
-      - ../../models:/models:ro
+      - ../../models:/models:ro,z            # ,z = SELinux label (Oracle Linux)
     ports:
       - "8000:8000"
     logging:
