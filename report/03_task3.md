@@ -136,7 +136,7 @@ P(AI)=0.0247  threshold=0.71  ->  Real  (confidence 97.5%)
 
 Using an alias means the serving side asks for "the champion", not "version 2": promoting a better model later is just moving the alias, with no code change.
 
-**How the champion reaches the server (and why serving never calls DagsHub per request).** The registry is consulted **once, at deployment time**: `register_model.py` (or `dvc pull models/champion.keras`) writes the file, which is then mounted read-only into the container (Compose) or copied to the Oracle VM with `scp`. At start-up the app loads that local file into memory. Calling DagsHub per request would add hundreds of milliseconds, make the service fail whenever DagsHub is slow or rate-limits, and expose credentials on the server.
+**How the champion reaches the server (and why serving never calls DagsHub per request).** The registry is consulted **once, at deployment time**: `register_model.py` (or `dvc pull models/champion.keras`) writes the file, which is then mounted read-only into the container (Compose) or copied to the AWS EC2 instance with `rsync`. At start-up the app loads that local file into memory. Calling DagsHub per request would add hundreds of milliseconds, make the service fail whenever DagsHub is slow or rate-limits, and expose credentials on the server.
 
 > **Screenshot 3.10** — Registry page: `visionguard` with versions 1 and 2 and the `@champion` alias.
 

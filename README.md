@@ -7,13 +7,13 @@ Ahsan Naeem · 23L-0517 · MLOps Assignment 2
 VisionGuard tells whether an uploaded image is AI-generated or real. A TensorFlow/Keras model
 (MobileNetV2 fine-tuned, compared against a CNN trained from scratch) is tracked with MLflow on
 DagsHub, served by a Flask web app that logs every request to PostgreSQL, packaged with Docker
-Compose, and its inference API is deployed on Oracle Cloud.
+Compose, and its inference API is deployed on AWS EC2.
 
 | | |
 |---|---|
 | GitHub | https://github.com/ahsan24naeem/23L-0517_A2_Ops |
 | DagsHub (code, data, models, MLflow) | https://dagshub.com/ahsan24naeem/23L-0517_A2_Ops |
-| Model API (Oracle Cloud) | http://141.148.203.241:8000 |
+| Model API (AWS EC2) | http://3.26.70.239:8000 |
 
 ## Repository layout
 
@@ -23,7 +23,7 @@ scripts/          audit, EDA, splits, train, tune, compare, analyse, register, p
 app/              Flask web app (upload, result, history, health) + templates/CSS
 api/              Flask model API deployed to the cloud (X-API-Key protected)
 docker/           Dockerfile (slim, non-root, health check) + naive Dockerfile for the size comparison
-deploy/oracle/    compose file + VM setup script for Oracle Cloud;  deploy/postman/ Postman collection
+deploy/oracle/    compose file + VM setup script (AWS EC2 / Oracle Cloud);  deploy/postman/ Postman collection
 labs/             tool labs: DVC toy, MLflow toy, Keras Tuner toy, Docker warm-up, CI toy
 tests/            pytest suite (runs in CI without TensorFlow)
 data/raw.dvc      DVC pointer to the dataset (data itself lives in DagsHub storage)
@@ -57,7 +57,7 @@ Run the web app:
 ```bash
 python -m app                                  # Flask server, debug off, http://127.0.0.1:5000
 docker compose up -d --build                   # web + PostgreSQL, http://localhost:8000
-INFERENCE_MODE=remote python -m app            # same UI, inference by the Oracle Cloud API
+INFERENCE_MODE=remote python -m app            # same UI, inference by the cloud API on AWS
 ```
 
 ## Configuration
