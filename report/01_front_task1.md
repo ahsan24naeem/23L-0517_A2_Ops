@@ -53,7 +53,7 @@ python scripts/check_env.py      # prints versions and whether TensorFlow sees a
 
 **What went wrong.** (1) The newest `pathspec` release broke `dvc add` (`cannot import name '_DIR_MARK'`), so I pinned `pathspec==0.12.1`. (2) SQLAlchemy 2.1 removed a class MLflow 2.22 imports (`FallbackAsyncAdaptedQueuePool`); I pinned SQLAlchemy 2.0.44. Both are typical "unpinned transitive dependency" failures, which is exactly why the versions are now pinned.
 
-> **Screenshot 1.1** — Terminal on my Mac: `source .venv/bin/activate && python scripts/check_env.py` showing user@host, date, all versions and "GPU available: False".
+> **Screenshot 1.1** — Terminal on my Mac: `conda activate vg && python scripts/check_env.py` showing user@host, date, all versions and "GPU available: False".
 
 ## 1.2 Dataset audit
 

@@ -28,12 +28,12 @@ The key is compared in constant time (`hmac.compare_digest`) and comes from the 
 ## Step-by-step deployment
 
 1. **Key pair.** EC2 → Key Pairs → *Import key pair* `23L-0517-key` with my existing public key (`~/.ssh/id_ed25519_university.pub`).
-2. **Launch.** EC2 → *Launch instances*: name `23L-0517_A2_Ops`, AMI *Ubuntu Server 24.04 LTS*, type *t3.micro*, key pair `23L-0517-key`, auto-assign public IP **enabled**, new security group `23L-0517-sg` with **SSH 22 from My IP** and **Custom TCP 8000 from Anywhere**, 20 GiB gp3. *(Screenshot 7.2: instance summary; Screenshot 7.3: inbound rules)*
+2. **Launch.** EC2 → *Launch instances*: name `23L-0517_A2_Ops`, AMI *Ubuntu Server 24.04 LTS*, type *t3.micro*, key pair `23L-0517-key`, auto-assign public IP **enabled**, new security group `23L-0517-sg` with **SSH 22 from My IP** and **Custom TCP 8000 from Anywhere**, 20 GiB gp3.
 3. **SSH alias** on my Mac (`~/.ssh/config`, host `vg` → the public IP, user `ubuntu`, that key), so every later command is `ssh vg …`.
 4. **Copy code + model.** `rsync -av --exclude data --exclude mlruns --exclude .git … ./ vg:~/23L-0517_A2_Ops/` — copies the code and `models/champion.keras` (the registry's `@champion`, exported once). The API never contacts DagsHub while serving.
-5. **Prepare the VM.** `ssh vg "cd ~/23L-0517_A2_Ops && bash deploy/oracle/setup_vm.sh"` installs Docker Engine 29 + Compose, adds the user to the `docker` group and a 2 GB swap file, and makes the model world-readable for the container's non-root user. *(Screenshot 7.4)*
+5. **Prepare the VM.** `ssh vg "cd ~/23L-0517_A2_Ops && bash deploy/oracle/setup_vm.sh"` installs Docker Engine 29 + Compose, adds the user to the `docker` group and a 2 GB swap file, and makes the model world-readable for the container's non-root user.
 6. **Secret.** On the VM: a random key (`secrets.token_urlsafe(32)`) written to `~/23L-0517_A2_Ops/.env` as `MODEL_API_KEY` — never committed.
-7. **Build and start.** `docker compose -f deploy/oracle/docker-compose.yml up -d --build` (image built in ~3 min); `ps` shows the container `Up (healthy)` and the logs show `model loaded: visionguard v2`. *(Screenshot 7.5)*
+7. **Build and start.** `docker compose -f deploy/oracle/docker-compose.yml up -d --build` (image built in ~3 min); `ps` shows the container `Up (healthy)` and the logs show `model loaded: visionguard v2`.
 8. **Test from outside**, including from my phone hotspot (a different network):
 
 ```text
@@ -44,7 +44,18 @@ $ curl -s -H "X-API-Key: ****" -F "image=@data/raw/RealArt/1032249.jpg" http://3
 {"confidence":0.9753,"filename":"1032249.jpg","height":1198,"is_ai":false,"label":"Real","latency_ms":158.4,
  "model_name":"visionguard","model_version":"2","p_ai":0.0247,"sha256":"04e99a55…","threshold":0.71,"width":1797}
 ```
-*(Screenshot 7.6)*
+
+> **Screenshot 7.1** — Oracle Cloud "Out of capacity for shape" error when launching the Always Free instance (Mumbai).
+
+> **Screenshot 7.2** — EC2 instance summary: `23L-0517_A2_Ops`, t3.micro, running, public IPv4 3.26.70.239.
+
+> **Screenshot 7.3** — Security group `23L-0517-sg` inbound rules: SSH 22 from my IP, TCP 8000 from anywhere.
+
+> **Screenshot 7.4** — End of `setup_vm.sh` on the instance: Docker 29.9 installed, 2 GB swap active.
+
+> **Screenshot 7.5** — `docker compose ps` (healthy), logs with `model loaded: visionguard v2`, and `curl localhost:8000/health` on the instance.
+
+> **Screenshot 7.6** — From my Mac over the internet: `/health`, `/predict` with the key (Real, 97.5 %) and without the key (`missing or invalid API key`).
 
 **API URL:** `http://3.26.70.239:8000` — health check `http://3.26.70.239:8000/health`, prediction `POST http://3.26.70.239:8000/predict` (multipart field `image`, header `X-API-Key`).
 
