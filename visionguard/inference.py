@@ -20,11 +20,34 @@ from .config import CLASS_NAMES, DEFAULT_IMG_SIZE
 from .preprocess import Source, load_image
 
 
+def decision_confidence(p_ai: float, threshold: float) -> float:
+    """Confidence in the label that was actually returned, measured from the threshold.
+
+    With a threshold t that is not 0.5, the naive "P(AI) or 1 - P(AI)" can be below 50 %
+    for the chosen label (e.g. P(AI)=0.57 < t=0.71 -> "Real" with 43 %), which is
+    contradictory. Instead each side of the threshold is rescaled to [0.5, 1]:
+    exactly at the threshold -> 0.5 (a coin flip), at P(AI)=1 or 0 -> 1.0.
+    """
+    t = min(max(threshold, 1e-6), 1 - 1e-6)
+    if p_ai >= t:
+        return 0.5 + 0.5 * (p_ai - t) / (1 - t)
+    return 0.5 + 0.5 * (t - p_ai) / t
+
+
+def certainty_label(confidence: float) -> str:
+    if confidence >= 0.8:
+        return "high"
+    if confidence >= 0.65:
+        return "moderate"
+    return "uncertain"
+
+
 @dataclass
 class Prediction:
     label: str
     is_ai: bool
-    confidence: float      # confidence in the returned label, 0.5 - 1.0
+    confidence: float      # confidence in the returned label, 0.5 (at the threshold) - 1.0
+    certainty: str         # 'high' | 'moderate' | 'uncertain'
     p_ai: float            # raw sigmoid output = P(AI-generated)
     threshold: float
     model_name: str
@@ -69,11 +92,12 @@ class Predictor:
         with self._lock:
             p_ai = float(self.model.predict(x, verbose=0)[0, 0])
         is_ai = p_ai >= self.threshold
-        confidence = p_ai if is_ai else 1.0 - p_ai
+        confidence = decision_confidence(p_ai, self.threshold)
         return Prediction(
             label=CLASS_NAMES[int(is_ai)],
             is_ai=bool(is_ai),
             confidence=round(confidence, 4),
+            certainty=certainty_label(confidence),
             p_ai=round(p_ai, 4),
             threshold=self.threshold,
             model_name=self.model_name,

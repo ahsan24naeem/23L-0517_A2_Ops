@@ -57,3 +57,7 @@ td.file { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-spa
 .error .code { color: var(--ai); font-weight: 700; margin: 0; }
 .error h1 { margin: 4px 0 8px; }
 @media (max-width: 600px) { .hero h1 { font-size: 1.5rem; } .result .verdict { font-size: 2rem; } nav a { margin-left: 12px; } }
+.pill.uncertain { background: #f6e7c8; color: #8a5a00; margin-left: 8px; }
+.pill.moderate { background: var(--line); color: var(--ink); margin-left: 8px; }
+.pill.high { background: var(--real-soft); color: var(--real); margin-left: 8px; }
+.result.ai .pill.high { background: var(--ai-soft); color: var(--ai); }

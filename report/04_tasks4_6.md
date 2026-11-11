@@ -2,7 +2,9 @@
 
 ## 4.1 Inference module
 
-`visionguard/inference.py` contains a `Predictor` class. Its constructor runs **once**, when the app starts: it loads `champion.keras`, reads the companion `champion.json` (decision threshold, model name, registry version), records the input size from the model itself, and runs one warm-up prediction so the first user does not pay TensorFlow's graph-building cost. `predict(image)` then (1) decodes and resizes the upload with `visionguard.preprocess.load_image` — **the same function the training `tf.data` pipeline calls** — (2) runs the model, (3) compares P(AI) with the threshold and returns a label, the confidence in that label (P(AI) or 1 − P(AI)), the raw probability, the threshold, model name/version and latency.
+`visionguard/inference.py` contains a `Predictor` class. Its constructor runs **once**, when the app starts: it loads `champion.keras`, reads the companion `champion.json` (decision threshold, model name, registry version), records the input size from the model itself, and runs one warm-up prediction so the first user does not pay TensorFlow's graph-building cost. `predict(image)` then (1) decodes and resizes the upload with `visionguard.preprocess.load_image` — **the same function the training `tf.data` pipeline calls** — (2) runs the model, (3) compares P(AI) with the threshold and returns a label, a confidence for that label, a certainty word (high / moderate / uncertain), the raw probability, the threshold, model name/version and latency.
+
+**Confidence with a non-0.5 threshold — a bug I found while testing.** My first version reported confidence as P(AI) for "AI" and 1 − P(AI) for "Real". With the validated threshold of 0.71, an image with P(AI) = 0.571 was labelled *Real* with "confidence 42.9 %" — less than a coin flip for the label just chosen. I changed the definition so it is measured from the threshold: each side is rescaled to [50 %, 100 %], so exactly at the threshold the confidence is 50 % and at P(AI) = 0 or 1 it is 100 % (`decision_confidence()` in `visionguard/inference.py`, covered by a unit test). Results below 65 % are shown as *uncertain — close to the decision threshold*, which is the honest message for such images; the raw P(AI) is always displayed next to it.
 
 **Why loading per request is unacceptable.** Loading the model means reading ~10 MB from disk, deserialising the Keras graph and initialising TensorFlow — about 2–4 seconds and a few hundred MB of memory each time. Per request, every user would wait seconds, memory would spike with concurrent users (each request holding its own copy) and the server would fall over under modest load. Loading once and sharing the in-memory model (protected by a lock for thread safety) makes each prediction ~100 ms.
 
@@ -10,9 +12,9 @@
 
 ```text
 $ python -c "from visionguard.inference import Predictor; p = Predictor('models/champion.keras'); ..."
-loaded visionguard v2 (threshold 0.71, input 224px) in 6.0s
-RealArt   1032249.jpg                            -> Real         conf=0.975 p_ai=0.025 119.1 ms
-AiArtData 1EOlo-3uyfHVlEE649tq62g.png            -> AI-generated conf=0.996 p_ai=0.996 125.1 ms
+loaded visionguard v2 (threshold 0.71, input 224px) in 5.2s
+RealArt   1032249.jpg                    -> Real         conf=0.983 (high) p_ai=0.025 141.3 ms
+AiArtData midjourney20images.jpg         -> AI-generated conf=0.998 (high) p_ai=0.999 127.2 ms
 ```
 
 > **Screenshot 4.1** — Console output of the inference module for one known real image and one known AI image.

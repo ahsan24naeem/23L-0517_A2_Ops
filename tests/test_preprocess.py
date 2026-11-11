@@ -25,3 +25,14 @@ def test_is_decodable_rejects_garbage():
     assert is_decodable(make_image_bytes())
     assert not is_decodable(b"\x89PNG\r\n\x1a\n" + b"not really a png" * 10)
     assert not is_decodable(b"")
+
+
+def test_decision_confidence_is_consistent_with_label():
+    from visionguard.inference import certainty_label, decision_confidence
+    t = 0.71
+    assert abs(decision_confidence(t, t) - 0.5) < 1e-9          # at the threshold: coin flip
+    assert abs(decision_confidence(1.0, t) - 1.0) < 1e-9
+    assert abs(decision_confidence(0.0, t) - 1.0) < 1e-9
+    c = decision_confidence(0.571, t)                            # "Real" side
+    assert 0.5 < c < 0.65 and certainty_label(c) == "uncertain"
+    assert decision_confidence(0.02, t) > 0.95
